@@ -1,2 +1,3 @@
 levenshtein
+pyphen
 torch
