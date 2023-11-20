@@ -27,7 +27,7 @@ SFC (soft computing) project at FIT (V|B)UT 2023/2024 winter semestr. Project co
 
 - Finish dataset + Load (mini class)
 - GRU Engine
-	- n to n recurrent net (shifted by max(len(syllables)??), s "konec slabiky" tokenem místo posledního písmenka daný slabiky
+	- n to n recurrent net (shifted by max(len(syllables)??)), s "konec slabiky" tokenem místo posledního písmenka daný slabiky
 	- dvě varianty: moje from-scratch, pyTorch refference
 - GRU trénování
 	- evaluátor danýho modelu pro další trénování
@@ -50,23 +50,3 @@ docu:
 https://pytorch.org/docs/stable/generated/torch.nn.GRU.html
 article with demo:
 https://blog.floydhub.com/gru-with-pytorch/
-
-## Dataset class schema (slovní popis)
-
-init(txt, nebo něco)
-
-self.:
-- orig: orig slova)
-- orig-flat:	lower-case + replace weird czech symbols to just a-z
-- trn-in: 		replace('-', ''))
-- trn-target: 	replace('\S-', '@')
-
-### mimo Dataset?
-
-Iterate-batches(size: int) ?
-- yield batches as list of tuples: (trn-in, trn-target)
-
-get-loss(trn-target, trn-new)
-- get loss in some kind... ? levenshtein??
-
-evaluate() ?
