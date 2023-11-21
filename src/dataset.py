@@ -3,6 +3,10 @@ import os
 import unicodedata
 import re
 
+import torch
+
+import charset
+
 
 class Dataset:
     """Load dataset from file and provide interface for training and evaluating."""
@@ -28,15 +32,25 @@ class Dataset:
     def __getitem__(self, index):
         return self.inputs[index], self.targets[index], self.original[index]
 
-    def batch_iterator(self, batch_size):
-        """Yield batches as list of tuples: (trn-in, trn-target)."""
+    def batch_iterator(self, batch_size, tensor_output=False):
+        """Yield batches as tuple of lists: (trn-in, trn-target)."""
+        RNN_SHIFT = 3  # shift for RNN input and target
         batch_size = min(batch_size, len(self))
         batch_count = len(self) // batch_size
 
         for i in range(batch_count):
             start = batch_size * i
             end = batch_size * (i + 1)
-            yield list(zip(self.inputs[start:end], self.targets[start:end]))
+            if not tensor_output:
+                yield self.inputs[start:end], self.targets[start:end]
+            else:
+                max_len = max([len(word) for word in self.inputs[start:end]]) + RNN_SHIFT
+                inputs = torch.zeros(batch_size, max_len, 1, dtype=torch.long)
+                targets = torch.zeros(batch_size, max_len, 1, dtype=torch.long)
+                for j in range(batch_size):
+                    inputs[j] = charset.word_to_tensor(self.inputs[start + j], padding=max_len)
+                    targets[j+RNN_SHIFT] = charset.word_to_tensor(self.targets[start + j], padding=max_len)
+                yield inputs, targets
 
 
 def test():
@@ -44,6 +58,10 @@ def test():
     print(len(dataset))
     for i in range(10):
         print(dataset[i])
+
+    for batch in dataset.batch_iterator(32):
+        print(batch)
+        break
 
 
 if __name__ == '__main__':
