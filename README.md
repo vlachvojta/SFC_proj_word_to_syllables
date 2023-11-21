@@ -50,3 +50,7 @@ docu:
 https://pytorch.org/docs/stable/generated/torch.nn.GRU.html
 article with demo:
 https://blog.floydhub.com/gru-with-pytorch/
+
+## Kde pokračovat...
+- Momentálně ta síť dělá predikci typu n->1, potřeboval bych udělat to n->n 
+	- shiftnutí jakoby hotovo... (možná i to shiftnutý pomocí blank charů na začátku GT + na konci vstupu jako padding)
