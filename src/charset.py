@@ -1,28 +1,40 @@
 import torch
 
-def char_to_number(char):
-    if ord(char) >= ord('a') and ord(char) <= ord('z'):
-        return ord(char) - ord('a')
-    if char == '-':
-        return 26
-    if char == '@':
-        return 27
-    if char == ' ':  # padding char
-        return 28
-    return 42  # unknown char
+charset_dictionary = {
+    'a': 1,
+    'b': 2,
+    'c': 3,
+    'd': 4,
+    'e': 5,
+    'f': 6,
+    'g': 7,
+    'h': 8,
+    'i': 9,
+    'j': 10,
+    'k': 11,
+    'l': 12,
+    'm': 13,
+    'n': 14,
+    'o': 15,
+    'p': 16,
+    'q': 17,
+    'r': 18,
+    's': 19,
+    't': 20,
+    'u': 21,
+    'v': 22,
+    'w': 23,
+    'x': 24,
+    'y': 25,
+    'z': 26,
+    '-': 27,
+    '@': 28, # end of syllable char
+    ' ': 29, # padding char
+    '#': 30, # unknown char
+}
 
-def number_to_char(number):
-    if number >= 0 and number <= 25:
-        return chr(number + ord('a'))
-    if number == 26:
-        return '-'
-    if number == 27:
-        return '@'
-    if number == 28:
-        return ' '
-    if number == 42:
-        return '#'
-    return '#'
+charset_dictionary_reversed = {v: k for k, v in charset_dictionary.items()}
+
 
 def word_to_tensor(word, padding:int=None):
     if not padding:
@@ -32,11 +44,12 @@ def word_to_tensor(word, padding:int=None):
     tensor = torch.fill(tensor, 28)
 
     for i, char in enumerate(word):
-        tensor[i][0] = char_to_number(char)
+        tensor[i][0] = charset_dictionary[char]
     return tensor
+
 
 def tensor_to_word(tensor):
     word = ''
     for i in range(tensor.size(0)):
-        word += number_to_char(tensor[i][0].item())
+        word += charset_dictionary_reversed(tensor[i][0].item())
     return word
