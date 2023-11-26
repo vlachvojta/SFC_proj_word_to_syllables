@@ -36,15 +36,13 @@ charset_dictionary = {
 charset_dictionary_reversed = {v: k for k, v in charset_dictionary.items()}
 
 
-def word_to_tensor(word, padding:int=None):
-    if not padding:
-        tensor = torch.zeros(len(word), 1, dtype=torch.long)
-    else:
-        tensor = torch.zeros(padding, 1, dtype=torch.long)
-    tensor = torch.fill(tensor, 28)
+def word_to_tensor(word, padding:int = 50, rnn_shift:int = 0):
+    length = max(len(word), padding)
+    tensor = torch.full((length, 1), charset_dictionary[' '], dtype=torch.long)
 
     for i, char in enumerate(word):
-        tensor[i][0] = charset_dictionary[char]
+        char_pos = min(i + rnn_shift, length - 1)
+        tensor[char_pos][0] = charset_dictionary[char]
     return tensor
 
 

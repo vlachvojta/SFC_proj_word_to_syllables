@@ -10,9 +10,10 @@ import charset
 
 class Dataset:
     """Load dataset from file and provide interface for training and evaluating."""
-    def __init__(self, path, rnn_shift:int = 0):
+    def __init__(self, path, rnn_shift:int = 0, padding:int = 50):
         self.path = path
         self.rnn_shift = rnn_shift  # shift for RNN input and target
+        self.padding = padding  # padding for RNN input and target
 
         # read lines of file
         with open(path, 'r', encoding='utf-8') as f:
@@ -44,12 +45,11 @@ class Dataset:
             if not tensor_output:
                 yield self.inputs[start:end], self.targets[start:end]
             else:
-                max_len = max([len(word) for word in self.inputs[start:end]]) + self.rnn_shift
-                inputs = torch.zeros(batch_size, max_len, 1, dtype=torch.long)
-                targets = torch.zeros(batch_size, max_len, 1, dtype=torch.long)
+                inputs = torch.zeros(batch_size, self.padding, 1, dtype=torch.long)
+                targets = torch.zeros(batch_size, self.padding, 1, dtype=torch.long)
                 for j in range(batch_size):
-                    inputs[j] = charset.word_to_tensor(self.inputs[start + j], padding=max_len)
-                    targets[j + self.rnn_shift] = charset.word_to_tensor(self.targets[start + j], padding=max_len)
+                    inputs[j] = charset.word_to_tensor(self.inputs[start + j], padding=self.padding)
+                    targets[j] = charset.word_to_tensor(self.targets[start + j], padding=self.padding, rnn_shift=self.rnn_shift)
                 yield inputs, targets
 
 
