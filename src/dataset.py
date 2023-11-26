@@ -45,8 +45,8 @@ class Dataset:
             if not tensor_output:
                 yield self.inputs[start:end], self.targets[start:end]
             else:
-                inputs = torch.zeros(batch_size, self.padding, 1, dtype=torch.long)
-                targets = torch.zeros(batch_size, self.padding, 1, dtype=torch.long)
+                inputs = torch.zeros(batch_size, self.padding, 1, dtype=torch.float)
+                targets = torch.zeros(batch_size, self.padding, 1, dtype=torch.float)
                 for j in range(batch_size):
                     inputs[j] = charset.word_to_tensor(self.inputs[start + j], padding=self.padding)
                     targets[j] = charset.word_to_tensor(self.targets[start + j], padding=self.padding, rnn_shift=self.rnn_shift)
