@@ -1,7 +1,6 @@
 """Simple GRU model for splitting words to syllables.
 
 Inspired by: https://blog.floydhub.com/gru-with-pytorch/ weather forecasting example."""
-# %%
 import os
 import time
 
@@ -10,42 +9,19 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.utils.data import TensorDataset, DataLoader
 
 from dataset import Dataset
 
 
-trn_file = os.path.join("dataset", "ssc_29-06-16", "set_1000_250", "trn.txt")
-val_file = os.path.join("dataset", "ssc_29-06-16", "set_1000_250", "val.txt")
-
-trn_dataset = Dataset(trn_file)
-val_dataset = Dataset(val_file)
-
-print(f'Loaded {len(trn_dataset)} training and {len(val_dataset)} validation samples.')
-# print('Loaded datasets!!')
-# print(len(trn_dataset))
-# for i in range(10):
-#     print(trn_dataset[i])
-
-# trn_data = pd.read_csv(trn_file, header=None).rename_columns({0: 'original'})
-# val_data = pd.read_csv(val_file, header=None).rename_columns({0: 'original'})
-# print(f'Loaded {len(trn_data)} training and {len(val_data)} validation samples.')
-
-# %%
-batch_size = 32
-
-# train_data = TensorDataset(torch.from_numpy(train_x), torch.from_numpy(train_y))
-# train_loader = DataLoader(train_data, shuffle=True, batch_size=batch_size, drop_last=True)
-
-device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
-
-# %%
 class GRUNet(nn.Module):
-    def __init__(self, input_dim=1, hidden_dim=256, output_dim=1, n_layers=1, drop_prob=0.2):
+    def __init__(self, input_dim=1, hidden_dim=256, output_dim=1, n_layers=1, drop_prob=0.2, device='cpu', batch_size=32):
         super(GRUNet, self).__init__()
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
+        self.device = device
+        self.batch_size = batch_size
 
         self.gru = nn.GRU(input_dim, hidden_dim, n_layers, batch_first=True, dropout=drop_prob)
         self.fc = nn.Linear(hidden_dim, output_dim)
@@ -62,11 +38,11 @@ class GRUNet(nn.Module):
 
     def init_hidden(self, batch_size):
         weight = next(self.parameters()).data
-        hidden = weight.new(self.n_layers, batch_size, self.hidden_dim).zero_().to(device)
+        hidden = weight.new(self.n_layers, batch_size, self.hidden_dim).zero_().to(self.device)
         return hidden
 
-# %%
-def train(train_data: Dataset, learn_rate, hidden_dim=256, EPOCHS=5):
+
+def train(train_data: Dataset, learn_rate, hidden_dim=256, EPOCHS=5, device='cpu', batch_size=32):
     # Instantiating the models
     model = GRUNet()
     model.to(device)
@@ -105,6 +81,7 @@ def train(train_data: Dataset, learn_rate, hidden_dim=256, EPOCHS=5):
     print("Total Training Time: {} seconds".format(str(sum(epoch_times))))
     return model
 
+
 # def evaluate(model, test_x, test_y, label_scalers):
 #     model.eval()
 #     outputs = []
@@ -124,7 +101,36 @@ def train(train_data: Dataset, learn_rate, hidden_dim=256, EPOCHS=5):
 #     print("sMAPE: {}%".format(sMAPE*100))
 #     return outputs, targets, sMAPE
 
-print('Everything ready!! Net definitions, training and evaluation functions defined.')
 
-gru_model = train(trn_dataset, learn_rate=0.001)
-# gru_outputs, targets, gru_sMAPE = evaluate(gru_model, test_x, test_y, label_scalers)
+def main():
+    trn_file = os.path.join("dataset", "ssc_29-06-16", "set_1000_250", "trn.txt")
+    val_file = os.path.join("dataset", "ssc_29-06-16", "set_1000_250", "val.txt")
+
+    trn_dataset = Dataset(trn_file)
+    val_dataset = Dataset(val_file)
+
+    print(f'Loaded {len(trn_dataset)} training and {len(val_dataset)} validation samples.')
+    # print('Loaded datasets!!')
+    # print(len(trn_dataset))
+    # for i in range(10):
+    #     print(trn_dataset[i])
+
+    # trn_data = pd.read_csv(trn_file, header=None).rename_columns({0: 'original'})
+    # val_data = pd.read_csv(val_file, header=None).rename_columns({0: 'original'})
+    # print(f'Loaded {len(trn_data)} training and {len(val_data)} validation samples.')
+
+    batch_size = 32
+
+    # train_data = TensorDataset(torch.from_numpy(train_x), torch.from_numpy(train_y))
+    # train_loader = DataLoader(train_data, shuffle=True, batch_size=batch_size, drop_last=True)
+
+    device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
+
+    print('Everything ready!! Net definitions, training and evaluation functions defined.')
+
+    gru_model = train(trn_dataset, learn_rate=0.001, device=device, batch_size=batch_size)
+    # gru_outputs, targets, gru_sMAPE = evaluate(gru_model, test_x, test_y, label_scalers)
+
+
+if __name__ == '__main__':
+    main()
