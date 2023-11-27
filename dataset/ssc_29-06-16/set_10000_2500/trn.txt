@@ -6868,7 +6868,6 @@ ka-va-lírs-tví
 u-ni-ver-zál-ní
 pré-te-ri-tum
 kód
-spo-le-čen-sko-hos-po-dář-ský
 na-té-ci
 od-ka-zo-vý
 fr-čet
@@ -9998,3 +9997,4 @@ nok
 va-go-no-vý
 jez-dit
 ži-vo-to-pi-sný
+do-pro-vo-dit

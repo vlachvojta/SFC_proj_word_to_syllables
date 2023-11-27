@@ -2709,7 +2709,6 @@ de-ter-mi-no-vat
 de-to-na-ce
 de-va-de-sa-te-rý
 de-va-de-sá-te-ro-ná-sob-ný
-de-va-de-sá-ti-ki-lo-me-tro-vý
 de-va-de-sá-ti-le-tý
 de-va-de-sá-ti-na
 de-va-de-sá-ti-ny
@@ -27307,8 +27306,6 @@ spo-le-hli-vost
 spo-le-hli-vý
 spo-le-hli-vě
 spo-le-hnu-tí
-spo-le-čen-sko-e-ko-no-mic-ký
-spo-le-čen-sko-hos-po-dář-ský
 spo-le-čen-sko-prá-vní
 spo-le-čen-sko-vě-dní
 spo-le-čen-sko-vě-dný

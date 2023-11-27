@@ -6868,7 +6868,6 @@ ka-va-lírs-tví
 u-ni-ver-zál-ní
 pré-te-ri-tum
 kód
-spo-le-čen-sko-hos-po-dář-ský
 na-té-ci
 od-ka-zo-vý
 fr-čet
@@ -16056,7 +16055,6 @@ pre-mons-trát
 zna-lec-ký
 us-po-ko-jit
 o-ri-en-tá-lec
-spo-le-čen-sko-e-ko-no-mic-ký
 ko-la-ud-ační
 u-pra-žit
 ža-cí
@@ -22453,7 +22451,6 @@ xy-lo-fo-no-vý
 tlus-to-ko-žec
 prud-ký
 před-kre-slit
-de-va-de-sá-ti-ki-lo-me-tro-vý
 zhýč-ka-nost
 do-mi-no
 po-lab-šti-na
