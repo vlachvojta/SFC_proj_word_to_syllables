@@ -4,6 +4,7 @@ unknown_char = '/'
 padding_char = '_'
 
 charset_dictionary = {
+    '_': 0, # padding char
     'a': 1,
     'b': 2,
     'c': 3,
@@ -30,10 +31,9 @@ charset_dictionary = {
     'x': 24,
     'y': 25,
     'z': 26,
-    '-': 27,
+    '-': 27, # reserved for implementation error (this char should not be in the input nor the labels of dataset)
     '@': 28, # end of syllable char
-    '_': 29, # padding char
-    '/': 30, # unknown char
+    '/': 29, # unknown char
 }
 
 charset_dictionary_reversed = {v: k for k, v in charset_dictionary.items()}
