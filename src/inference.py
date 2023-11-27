@@ -22,9 +22,7 @@ def transcribe_word(model, word:str):
 
 
 def main():
-    model_names = [model for model in os.listdir('models') if model.endswith('.pt')]
-    model_name = sorted(model_names, key=lambda x: int(re.match(r'\S+_(\d+)epochs', x).groups(1)[0]))[-1]
-    print(model_name)
+    model_name = helpers.find_last_model('models')
     model, _ = helpers.load_model(model_name, GRUNet)
 
     while True:

@@ -90,7 +90,8 @@ def plot_losses(trn_losses, trn_losses_lev, val_losses_lev, hidden_dim, epoch, b
     fig.savefig(os.path.join(path, image_name))
 
 
-def load_model(model_name, model_class, path:str = 'models'):
+def load_model(model_path, model_class, path:str = 'models'):
+    model_name = find_last_model(path)
     hidden_dim = 0
     match_obj = re.match(r'\S+_(\d+)hid', model_name)
     if match_obj:
@@ -108,6 +109,11 @@ def load_model(model_name, model_class, path:str = 'models'):
     print(model)
     print(f'Epochs trained: {epochs}')
     return model, epochs
+
+
+def find_last_model(path:str = 'models'):
+    model_names = [model for model in os.listdir(path) if model.endswith('.pt')]
+    return sorted(model_names, key=lambda x: int(re.match(r'\S+_(\d+)epochs', x).groups(1)[0]))[-1]
 
 
 # def evaluate(model, test_x, test_y, label_scalers):

@@ -47,10 +47,10 @@ class GRUNet(nn.Module):
 
 
 def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epochs=5, device='cpu',
-          batch_size=32, save_step=5, view_step=1, load_model:str = None):
+          batch_size=32, save_step=5, view_step=1, load_model_path:str = None):
     # Instantiating the models
-    if load_model:
-        model, epochs_trained = helpers.load_model(load_model, GRUNet)
+    if load_model_path:
+        model, epochs_trained = helpers.load_model(load_model_path, GRUNet)
         epochs += epochs_trained
     else:
         model = GRUNet(hidden_dim=hidden_dim, device=device, batch_size=batch_size)
@@ -119,8 +119,8 @@ def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epoc
 
 
 def main():
-    trn_file = os.path.join("dataset", "ssc_29-06-16", "set_1000_250", "trn.txt")
-    val_file = os.path.join("dataset", "ssc_29-06-16", "set_1000_250", "val.txt")
+    trn_file = os.path.join("dataset", "ssc_29-06-16", "set_10000_2500", "trn.txt")
+    val_file = os.path.join("dataset", "ssc_29-06-16", "set_10000_2500", "val.txt")
 
     padding = 20
 
@@ -130,7 +130,7 @@ def main():
 
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
     # gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=32, epochs=500, save_step=50, view_step=5)
-    gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=32, epochs=4000, save_step=500, view_step=50, load_model='torch_gru_8hid_32batch_4000epochs.pt')
+    gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=256, epochs=4000, save_step=500, view_step=100, load_model_path='models')
     # gru_outputs, targets, gru_sMAPE = helpers.evaluate(gru_model, test_x, test_y, label_scalers)
 
 
