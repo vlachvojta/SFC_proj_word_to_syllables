@@ -73,24 +73,13 @@ def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epoc
     for epoch in range(epochs_trained, epochs + 1):
         start_time = time.time()
         for i, (x, labels) in enumerate(train_data.batch_iterator(batch_size, tensor_output=True), start=1):
-            # print(f'x({x.shape})')
-            # print(f'labels({labels.shape})')
             model.zero_grad()
-
             out, _ = model(x.to(device).float(), h)
-
-            # print('Trying to get loss:')
-            # print(f'out({out.shape})')
-            # print(f'labels({labels.shape})')
-
             loss = criterion(out, labels.to(device).float())
-            # print(f'loss: {loss}')
             loss.backward()
 
             outputs = [charset.tensor_to_word(o) for o in out]
             labels = [charset.tensor_to_word(l) for l in labels]
-            # print(f'Levenshtein loss: {trn_losses[-1]:.3f} %')
-
             optimizer.step()
         trn_losses_lev.append(helpers.levenstein_loss(outputs, labels))
         trn_losses.append(loss.item())
@@ -129,9 +118,7 @@ def main():
     print(f'Loaded {len(trn_dataset)} training and {len(val_dataset)} validation samples.')
 
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
-    # gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=32, epochs=500, save_step=50, view_step=5)
     gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=64, epochs=4000, save_step=500, view_step=100, load_model_path='models')
-    # gru_outputs, targets, gru_sMAPE = helpers.evaluate(gru_model, test_x, test_y, label_scalers)
 
 
 if __name__ == '__main__':

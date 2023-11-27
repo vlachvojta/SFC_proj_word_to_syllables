@@ -114,23 +114,3 @@ def load_model(model_path, model_class, path:str = 'models'):
 def find_last_model(path:str = 'models'):
     model_names = [model for model in os.listdir(path) if model.endswith('.pt')]
     return sorted(model_names, key=lambda x: int(re.match(r'\S+_(\d+)epochs', x).groups(1)[0]))[-1]
-
-
-# def evaluate(model, test_x, test_y, label_scalers):
-#     model.eval()
-#     outputs = []
-#     targets = []
-#     start_time = time.time()
-#     for i in test_x.keys():
-#         inp = torch.from_numpy(np.array(test_x[i]))
-#         labs = torch.from_numpy(np.array(test_y[i]))
-#         h = model.init_hidden(inp.shape[0])
-#         out, h = model(inp.to(device).float(), h)
-#         outputs.append(label_scalers[i].inverse_transform(out.cpu().detach().numpy()).reshape(-1))
-#         targets.append(label_scalers[i].inverse_transform(labs.numpy()).reshape(-1))
-#     print("Evaluation Time: {}".format(str(time.time()-start_time)))
-#     sMAPE = 0
-#     for i in range(len(outputs)):
-#         sMAPE += np.mean(abs(outputs[i]-targets[i])/(targets[i]+outputs[i])/2)/len(outputs)
-#     print("sMAPE: {}%".format(sMAPE*100))
-#     return outputs, targets, sMAPE
