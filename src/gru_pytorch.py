@@ -17,7 +17,7 @@ import helpers
 
 
 class GRUNet(nn.Module):
-    def __init__(self, input_dim=1, hidden_dim=8, output_dim=50, n_layers=1, device='cpu', batch_size=32):
+    def __init__(self, input_dim=1, hidden_dim=8, output_dim=25, n_layers=1, device='cpu', batch_size=32):
         super(GRUNet, self).__init__()
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
@@ -193,12 +193,12 @@ def main():
     trn_file = os.path.join("dataset", "ssc_29-06-16", "set_1000_250", "trn.txt")
     val_file = os.path.join("dataset", "ssc_29-06-16", "set_1000_250", "val.txt")
 
-    trn_dataset = Dataset(trn_file)
-    val_dataset = Dataset(val_file)
+    trn_dataset = Dataset(trn_file, rnn_shift=3, padding=25)
+    val_dataset = Dataset(val_file, rnn_shift=3, padding=25)
     print(f'Loaded {len(trn_dataset)} training and {len(val_dataset)} validation samples.')
 
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
-    gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=32, epochs=1000, save_step=100, view_step=20)
+    gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=32, epochs=2000, save_step=200, view_step=40)
     # gru_outputs, targets, gru_sMAPE = evaluate(gru_model, test_x, test_y, label_scalers)
 
 

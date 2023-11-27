@@ -11,7 +11,7 @@ import helpers
 
 class Dataset:
     """Load dataset from file and provide interface for training and evaluating."""
-    def __init__(self, path, rnn_shift:int = 0, padding:int = 50):
+    def __init__(self, path, rnn_shift:int = 0, padding:int = 25):
         self.path = path
         self.rnn_shift = rnn_shift  # shift for RNN input and target
         self.padding = padding  # padding for RNN input and target
@@ -21,13 +21,28 @@ class Dataset:
             self.lines = f.readlines()
 
         self.original = [line.strip('\r\n').lower() for line in self.lines]
-        self.original_flat = [unicodedata.normalize('NFD', word).encode('ascii', 'ignore').decode()
-                              for word in self.original]
-        self.original_flat = [''.join(c for c in word if re.match(r'[a-z\-]', c))
-                         for word in self.original_flat]
+        self.original_flat = self.flatten_words()
 
-        self.inputs = [word.replace('-', '') for word in self.original_flat]
-        self.targets = [re.sub(r'\S\-', '@', word) for word in self.original_flat]
+        self.inputs = []
+        self.targets = []
+        for word in self.original_flat:
+            if self.padding < len(word) + self.rnn_shift:
+                word = word[:self.padding - self.rnn_shift]  # Cut word to fit padding
+            input_word = word.replace('-', '')
+            input_word = charset.padding_char * (self.padding - len(input_word) - self.rnn_shift) + input_word + charset.padding_char * self.rnn_shift
+            self.inputs.append(input_word)
+
+            target = re.sub(r'\S\-', '@', word)
+            target = charset.padding_char * (self.padding - len(target)) + target
+            self.targets.append(target)
+
+    def flatten_words(self):
+        original_flat = []
+        for word in self.original:
+            flat = unicodedata.normalize('NFD', word).encode('ascii', 'ignore').decode()  # normalize weird czech symbols to basic ASCII symbols
+            flat = ''.join(c for c in flat if re.match(r'[a-z\-]', c))
+            original_flat.append(flat)
+        return original_flat    
 
     def __len__(self):
         return len(self.inputs)
@@ -55,8 +70,8 @@ class Dataset:
                 inputs = torch.zeros(batch_size, self.padding, 1, dtype=torch.float)
                 targets = torch.zeros(batch_size, self.padding, dtype=torch.float)
                 for j in range(batch_size):
-                    inputs[j] = helpers.transpose(charset.word_to_tensor(self.inputs[start + j], padding=self.padding))
-                    targets[j] = charset.word_to_tensor(self.targets[start + j], padding=self.padding, rnn_shift=self.rnn_shift)
+                    inputs[j] = helpers.transpose(charset.word_to_tensor(self.inputs[start + j]))
+                    targets[j] = charset.word_to_tensor(self.targets[start + j])
                 yield inputs, targets
 
 

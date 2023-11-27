@@ -39,7 +39,7 @@ charset_dictionary = {
 charset_dictionary_reversed = {v: k for k, v in charset_dictionary.items()}
 
 
-def word_to_tensor(word, padding:int = 50, rnn_shift:int = 0):
+def word_to_tensor(word, padding:int = 0, rnn_shift:int = 0):
     length = max(len(word), padding)
     tensor = torch.full((length, ), charset_dictionary[padding_char], dtype=torch.float)
 
