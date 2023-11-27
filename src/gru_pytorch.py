@@ -10,41 +10,43 @@ import matplotlib.pyplot as plt
 
 import torch
 from torch import nn
-from torch.utils.data import TensorDataset, DataLoader
 
 from dataset import Dataset
+import charset
+import helpers
 
 
 class GRUNet(nn.Module):
-    def __init__(self, input_dim=1, hidden_dim=256, output_dim=1, n_layers=1, drop_prob=0.2, device='cpu', batch_size=32):
+    def __init__(self, input_dim=1, hidden_dim=8, output_dim=50, n_layers=1, device='cpu', batch_size=32):
         super(GRUNet, self).__init__()
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
         self.device = device
         self.batch_size = batch_size
 
-        self.gru = nn.GRU(input_dim, hidden_dim, n_layers, batch_first=True, dropout=drop_prob)
+        self.gru = nn.GRU(input_dim, hidden_dim, n_layers, batch_first=True, bias=False)
         self.fc = nn.Linear(hidden_dim, output_dim)
         self.relu = nn.ReLU()
 
     def forward(self, x, h):
-        print(f'FORWARD! x({x.shape}): {x}')
+        # print(f'FORWARD! x({x.shape})') #: {x}')
         out, h = self.gru(x, h)
-        print(f'out({out.shape}): {out}')
-        print(f'h({h.shape}): {h}')
+        # print(f'out({out.shape})')  # : {out}')
+        # print(f'h({h.shape})')  # : {h}')
         out = self.fc(self.relu(out[:,-1]))
-        print(f'fc(relu(out)) ({out.shape}): {out}')
+        # print(f'fc(relu(out)) ({out.shape})')  # : {out}')
         return out, h
 
-    def init_hidden(self, batch_size):
+    def init_hidden(self, batch_size:int=None):
         weight = next(self.parameters()).data
-        hidden = weight.new(self.n_layers, batch_size, self.hidden_dim).zero_().to(self.device)
-        return hidden
+        if not batch_size:
+            return weight.new(self.n_layers, self.hidden_dim).zero_().to(self.device)
+        return weight.new(self.n_layers, batch_size, self.hidden_dim).zero_().to(self.device)
 
 
-def train(train_data: Dataset, learn_rate, hidden_dim=256, EPOCHS=5, device='cpu', batch_size=32):
+def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epochs=5, device='cpu', batch_size=32, save_step=5, view_step=1):
     # Instantiating the models
-    model = GRUNet()
+    model = GRUNet(hidden_dim=hidden_dim, device=device, batch_size=batch_size)
     model.to(device)
 
     # Defining loss function and optimizer
@@ -53,34 +55,119 @@ def train(train_data: Dataset, learn_rate, hidden_dim=256, EPOCHS=5, device='cpu
 
     model.train()
     print("Starting Training")
+    print('')
     epoch_times = []
-    # Start training loop
-    for epoch in range(1,EPOCHS+1):
+    trn_losses = []
+    trn_losses_lev = []
+    val_losses_lev = []
+
+    for epoch in range(1,epochs+1):
         start_time = time.time()
         h = model.init_hidden(batch_size)
-        avg_loss = 0.
-        counter = 0
-        for x, label in train_data.batch_iterator(batch_size, tensor_output=True):
-            print(f'x({x.shape}):')
-            print(f'label({label.shape})')
-            counter += 1
+        for i, (x, labels) in enumerate(train_data.batch_iterator(batch_size, tensor_output=True), start=1):
+            # print(f'x({x.shape})')
+            # print(f'labels({labels.shape})')
             h = h.data
             model.zero_grad()
-            
+
             out, h = model(x.to(device).float(), h)
-            loss = criterion(out, label.to(device).float())
+
+            # print('Trying to get loss:')
+            # print(f'out({out.shape})')
+            # print(f'labels({labels.shape})')
+
+            loss = criterion(out, labels.to(device).float())
+            # print(f'loss: {loss}')
             loss.backward()
+
+            outputs = [charset.tensor_to_word(o) for o in out]
+            labels = [charset.tensor_to_word(l) for l in labels]
+            # print(f'Levenshtein loss: {trn_losses[-1]:.3f} %')
+
             optimizer.step()
-            avg_loss += loss.item()
-            if counter%200 == 0:
-                print("Epoch {}......Step: {}/{}....... Average Loss for Epoch: {}".format(epoch, counter, len(train_loader), avg_loss/counter))
+        trn_losses_lev.append(helpers.levenstein_loss(outputs, labels))
+        trn_losses.append(loss.item())
         current_time = time.time()
-        print("Epoch {}/{} Done, Total Loss: {}".format(epoch, EPOCHS, avg_loss/len(train_loader)))
-        print("Time Elapsed for Epoch: {} seconds".format(str(current_time-start_time)))
+
+        if epoch % view_step == 0:
+            val_loss_lev, val_out_words, val_labels_words = test_val(model, val_data, device, batch_size)
+            val_losses_lev.append(val_loss_lev)
+
+            print(f"Epoch {epoch}/{epochs}, trn losses: {trn_losses[-1]:.3f}, {trn_losses_lev[-1]:.2f} %, val losses: {val_losses_lev[-1]:.2f} %")
+            print(f"Time Elapsed for Epoch: {current_time - start_time:.2f} seconds")
+            print('Example:')
+            print(f'\tout: {val_out_words[:100]}')
+            print(f'\tlab: {val_labels_words[:100]}')
+            print('')
         epoch_times.append(current_time-start_time)
-    print("Total Training Time: {} seconds".format(str(sum(epoch_times))))
+
+        if epoch % save_step == 0:
+            plot_losses(trn_losses, trn_losses_lev, val_losses_lev, hidden_dim, epoch, batch_size, view_step=view_step, path='models')
+            save_model(model, hidden_dim, epoch, batch_size, path='models')
+            save_out_and_labels(val_out_words, val_labels_words, hidden_dim, epoch, batch_size, path='models')
+
+    print(f"Total Training Time: {sum(epoch_times):.2f} seconds. ({sum(epoch_times)/epochs:.2f} seconds per epoch)")
+
     return model
 
+def save_model(model, hidden_dim, epoch, batch_size, path:str = '.'):
+    model_name = f'torch_gru_{hidden_dim}hid_{batch_size}batch_{epoch}epochs.pt'
+
+    if not os.path.isdir(path):
+        os.makedirs(path)
+
+    torch.save(model.state_dict(), os.path.join(path, model_name))
+    print(f'Model saved to {model_name}')
+
+def test_val(model, val_data, device, batch_size):
+    out_words = []
+    labels_words = []
+
+    for i, (x, labels) in enumerate(val_data.batch_iterator(batch_size, tensor_output=True), start=1):
+        h_start = model.init_hidden(batch_size=batch_size)
+        out, _ = model(x.to(device).float(), h_start.to(device).float())
+        outputs = [charset.tensor_to_word(o) for o in out]
+        labels = [charset.tensor_to_word(l) for l in labels]
+        out_words += outputs
+        labels_words += labels
+
+    out_words = ','.join(out_words)
+    labels_words = ','.join(labels_words)
+
+    return helpers.levenstein_loss(out_words, labels_words), out_words, labels_words
+
+def save_out_and_labels(val_out_words, val_labels_words, hidden_dim, epoch, batch_size, path='models'):
+    if not os.path.isdir(path):
+        os.makedirs(path)
+
+    out_name = f'torch_gru_{hidden_dim}hid_{batch_size}batch_{epoch}epochs_val_out.txt'
+    with open(os.path.join(path, out_name), 'w') as f:
+        f.write(val_out_words)
+
+    labels_name = f'torch_gru_{hidden_dim}hid_{batch_size}batch_{epoch}epochs_val_labels.txt'
+    with open(os.path.join(path, labels_name), 'w') as f:
+        f.write(val_labels_words)
+
+    print(f'Out and labels saved to {out_name} and {labels_name}')
+
+def plot_losses(trn_losses, trn_losses_lev, val_losses_lev, hidden_dim, epoch, batch_size,
+                view_step: int, path:str = '.'):
+    fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+    axs[0].plot(trn_losses)
+    axs[0].set_title('Trn MSE Loss')
+    axs[0].set_xlabel('Epochs')
+    axs[1].plot(trn_losses_lev)
+    axs[1].set_title('Trn Levenshtein Loss')
+    axs[1].set_xlabel('Epochs')
+    axs[2].plot([i * view_step for i in range(len(val_losses_lev))], val_losses_lev)
+    axs[2].set_title('Val Levenshtein Loss')
+    axs[2].set_xlabel('Epochs')
+    plt.tight_layout()
+
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    image_name = f'torch_gru_{hidden_dim}hid_{batch_size}batch_{epoch}epochs_losses.png'
+    fig.savefig(os.path.join(path, image_name))
 
 # def evaluate(model, test_x, test_y, label_scalers):
 #     model.eval()
@@ -108,27 +195,10 @@ def main():
 
     trn_dataset = Dataset(trn_file)
     val_dataset = Dataset(val_file)
-
     print(f'Loaded {len(trn_dataset)} training and {len(val_dataset)} validation samples.')
-    # print('Loaded datasets!!')
-    # print(len(trn_dataset))
-    # for i in range(10):
-    #     print(trn_dataset[i])
-
-    # trn_data = pd.read_csv(trn_file, header=None).rename_columns({0: 'original'})
-    # val_data = pd.read_csv(val_file, header=None).rename_columns({0: 'original'})
-    # print(f'Loaded {len(trn_data)} training and {len(val_data)} validation samples.')
-
-    batch_size = 32
-
-    # train_data = TensorDataset(torch.from_numpy(train_x), torch.from_numpy(train_y))
-    # train_loader = DataLoader(train_data, shuffle=True, batch_size=batch_size, drop_last=True)
 
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
-
-    print('Everything ready!! Net definitions, training and evaluation functions defined.')
-
-    gru_model = train(trn_dataset, learn_rate=0.001, device=device, batch_size=batch_size)
+    gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=32, epochs=1000, save_step=100, view_step=20)
     # gru_outputs, targets, gru_sMAPE = evaluate(gru_model, test_x, test_y, label_scalers)
 
 
