@@ -6,6 +6,7 @@ import re
 import torch
 
 import charset
+import helpers
 
 
 class Dataset:
@@ -34,6 +35,12 @@ class Dataset:
     def __getitem__(self, index):
         return self.inputs[index], self.targets[index], self.original[index]
 
+    def get_item(self, index):
+        x = helpers.transpose(charset.word_to_tensor(self.inputs[index], padding=self.padding))
+        target = charset.word_to_tensor(self.targets[index], padding=self.padding, rnn_shift=self.rnn_shift)
+
+        return x, target
+
     def batch_iterator(self, batch_size, tensor_output=False):
         """Yield batches as tuple of lists: (trn-in, trn-target)."""
         batch_size = min(batch_size, len(self))
@@ -46,9 +53,9 @@ class Dataset:
                 yield self.inputs[start:end], self.targets[start:end]
             else:
                 inputs = torch.zeros(batch_size, self.padding, 1, dtype=torch.float)
-                targets = torch.zeros(batch_size, self.padding, 1, dtype=torch.float)
+                targets = torch.zeros(batch_size, self.padding, dtype=torch.float)
                 for j in range(batch_size):
-                    inputs[j] = charset.word_to_tensor(self.inputs[start + j], padding=self.padding)
+                    inputs[j] = helpers.transpose(charset.word_to_tensor(self.inputs[start + j], padding=self.padding))
                     targets[j] = charset.word_to_tensor(self.targets[start + j], padding=self.padding, rnn_shift=self.rnn_shift)
                 yield inputs, targets
 

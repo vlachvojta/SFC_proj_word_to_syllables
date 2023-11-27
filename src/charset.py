@@ -1,5 +1,8 @@
 import torch
 
+unknown_char = '/'
+padding_char = '_'
+
 charset_dictionary = {
     'a': 1,
     'b': 2,
@@ -29,8 +32,8 @@ charset_dictionary = {
     'z': 26,
     '-': 27,
     '@': 28, # end of syllable char
-    ' ': 29, # padding char
-    '#': 30, # unknown char
+    '_': 29, # padding char
+    '/': 30, # unknown char
 }
 
 charset_dictionary_reversed = {v: k for k, v in charset_dictionary.items()}
@@ -38,16 +41,20 @@ charset_dictionary_reversed = {v: k for k, v in charset_dictionary.items()}
 
 def word_to_tensor(word, padding:int = 50, rnn_shift:int = 0):
     length = max(len(word), padding)
-    tensor = torch.full((length, 1), charset_dictionary[' '], dtype=torch.float)
+    tensor = torch.full((length, ), charset_dictionary[padding_char], dtype=torch.float)
 
     for i, char in enumerate(word):
         char_pos = min(i + rnn_shift, length - 1)
-        tensor[char_pos][0] = charset_dictionary[char]
+        tensor[char_pos] = charset_dictionary[char]
     return tensor
 
 
 def tensor_to_word(tensor):
     word = ''
+    tensor = torch.round(tensor).type(torch.long)
     for i in range(tensor.size(0)):
-        word += charset_dictionary_reversed[tensor[i][0].item()]
+        try:
+            word += charset_dictionary_reversed[tensor[i].item()]
+        except KeyError:
+            word += unknown_char  # unknown char
     return word

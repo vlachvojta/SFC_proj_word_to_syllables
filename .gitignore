@@ -1,3 +1,7 @@
+# saved pytorch models
+*.pt
+models/
+
 # VS Code
 .code/
 
