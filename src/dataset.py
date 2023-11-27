@@ -29,11 +29,11 @@ class Dataset:
             if self.padding < len(word) + self.rnn_shift:
                 word = word[:self.padding - self.rnn_shift]  # Cut word to fit padding
             input_word = word.replace('-', '')
-            input_word = charset.padding_char * (self.padding - len(input_word) - self.rnn_shift) + input_word + charset.padding_char * self.rnn_shift
+            input_word = input_word + charset.padding_char * (self.padding - len(input_word) - self.rnn_shift) + charset.padding_char * self.rnn_shift
             self.inputs.append(input_word)
 
             target = re.sub(r'\S\-', '@', word)
-            target = charset.padding_char * (self.padding - len(target)) + target
+            target = charset.padding_char * self.rnn_shift + target + charset.padding_char * (self.padding - len(target) - self.rnn_shift)
             self.targets.append(target)
 
     def flatten_words(self):
@@ -68,10 +68,10 @@ class Dataset:
                 yield self.inputs[start:end], self.targets[start:end]
             else:
                 inputs = torch.zeros(batch_size, self.padding, 1, dtype=torch.float)
-                targets = torch.zeros(batch_size, self.padding, dtype=torch.float)
+                targets = torch.zeros(batch_size, self.padding, 1, dtype=torch.float)
                 for j in range(batch_size):
                     inputs[j] = helpers.transpose(charset.word_to_tensor(self.inputs[start + j]))
-                    targets[j] = charset.word_to_tensor(self.targets[start + j])
+                    targets[j] = helpers.transpose(charset.word_to_tensor(self.targets[start + j]))
                 yield inputs, targets
 
 

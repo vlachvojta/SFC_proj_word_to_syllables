@@ -17,7 +17,7 @@ import helpers
 
 
 class GRUNet(nn.Module):
-    def __init__(self, input_dim=1, hidden_dim=8, output_dim=25, n_layers=1, device='cpu', batch_size=32):
+    def __init__(self, input_dim=1, hidden_dim=8, output_dim=1, n_layers=1, device='cpu', batch_size=32):
         super(GRUNet, self).__init__()
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
@@ -31,10 +31,12 @@ class GRUNet(nn.Module):
     def forward(self, x, h):
         # print(f'FORWARD! x({x.shape})') #: {x}')
         out, h = self.gru(x, h)
-        # print(f'out({out.shape})')  # : {out}')
-        # print(f'h({h.shape})')  # : {h}')
-        out = self.fc(self.relu(out[:,-1]))
-        # print(f'fc(relu(out)) ({out.shape})')  # : {out}')
+        # print(f'out({out.shape})')#: {out}')
+        # print(f'h({h.shape})')#: {h}')
+        activated = self.relu(out)
+        # print(f'activated({activated.shape})')#: {activated}')
+        out = self.fc(activated)
+        # print(f'fc(relu(out)) ({out.shape})')#: {out}')
         return out, h
 
     def init_hidden(self, batch_size:int=None):
@@ -44,9 +46,10 @@ class GRUNet(nn.Module):
         return weight.new(self.n_layers, batch_size, self.hidden_dim).zero_().to(self.device)
 
 
-def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epochs=5, device='cpu', batch_size=32, save_step=5, view_step=1):
+def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epochs=5, device='cpu',
+          batch_size=32, save_step=5, view_step=1):
     # Instantiating the models
-    model = GRUNet(hidden_dim=hidden_dim, device=device, batch_size=batch_size)
+    model = GRUNet(hidden_dim=hidden_dim, device=device, batch_size=batch_size, output_dim=1)
     model.to(device)
 
     # Defining loss function and optimizer
@@ -193,11 +196,14 @@ def main():
     trn_file = os.path.join("dataset", "ssc_29-06-16", "set_1000_250", "trn.txt")
     val_file = os.path.join("dataset", "ssc_29-06-16", "set_1000_250", "val.txt")
 
-    trn_dataset = Dataset(trn_file, rnn_shift=3, padding=25)
-    val_dataset = Dataset(val_file, rnn_shift=3, padding=25)
+    padding = 20
+
+    trn_dataset = Dataset(trn_file, rnn_shift=0, padding=padding)
+    val_dataset = Dataset(val_file, rnn_shift=0, padding=padding)
     print(f'Loaded {len(trn_dataset)} training and {len(val_dataset)} validation samples.')
 
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
+    # gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=32, epochs=500, save_step=50, view_step=5, padding=padding)
     gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=32, epochs=2000, save_step=200, view_step=40)
     # gru_outputs, targets, gru_sMAPE = evaluate(gru_model, test_x, test_y, label_scalers)
 
