@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 import torch
 from torch import nn
-import Levenshtein as lev
+import helpers
 
 from dataset import Dataset
 import charset
@@ -118,14 +118,6 @@ class GRUNetFromScratch():
         return hidden
 
 
-def levenstein_loss(a, b):
-    if isinstance(a, list):
-        a = ''.join(a)
-    if isinstance(b, list):
-        b = ''.join(b)
-    return 100.0 * lev.distance(a, b) / len(b)
-
-
 def train(train_data: Dataset, learn_rate, hidden_dim=8, epochs=5, device='cpu', batch_size=32):
     model = GRUNetFromScratch(hidden_dim=hidden_dim, device=device, batch_size=batch_size)
     print("Starting Training")
@@ -150,7 +142,7 @@ def train(train_data: Dataset, learn_rate, hidden_dim=8, epochs=5, device='cpu',
             print(labels[:5])
 
             # TODO calculate loss using levenstein distance
-            losses.append(levenstein_loss(outputs, labels))
+            losses.append(helpers.levenstein_loss(outputs, labels))
             print(f'Loss: {losses[-1]:.3f} %')
 
             # TODO backpropagate and update weights
