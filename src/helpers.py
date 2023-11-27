@@ -1,4 +1,5 @@
 import os
+import re
 
 import matplotlib.pyplot as plt
 import torch
@@ -85,6 +86,26 @@ def plot_losses(trn_losses, trn_losses_lev, val_losses_lev, hidden_dim, epoch, b
         os.makedirs(path)
     image_name = f'torch_gru_{hidden_dim}hid_{batch_size}batch_{epoch}epochs_losses.png'
     fig.savefig(os.path.join(path, image_name))
+
+
+def load_model(model_name, model_class, path:str = 'models'):
+    hidden_dim = 0
+    match_obj = re.match(r'\S+_(\d+)hid', model_name)
+    if match_obj:
+        hidden_dim = int(match_obj.groups(1)[0])
+    epochs = 0
+    match_obj = re.match(r'\S+_(\d+)epochs', model_name)
+    if match_obj:
+        epochs = int(match_obj.groups(1)[0])
+
+    model = model_class(hidden_dim=hidden_dim)
+    model.load_state_dict(torch.load(os.path.join(path, model_name)))
+    model.eval()
+
+    print(f'Model loaded from {model_name}')
+    print(model)
+    print(f'Epochs trained: {epochs}')
+    return model, epochs
 
 
 # def evaluate(model, test_x, test_y, label_scalers):

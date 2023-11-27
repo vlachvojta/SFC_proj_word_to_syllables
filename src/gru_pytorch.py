@@ -47,10 +47,15 @@ class GRUNet(nn.Module):
 
 
 def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epochs=5, device='cpu',
-          batch_size=32, save_step=5, view_step=1):
+          batch_size=32, save_step=5, view_step=1, load_model:str = None):
     # Instantiating the models
-    model = GRUNet(hidden_dim=hidden_dim, device=device, batch_size=batch_size, output_dim=1)
-    model.to(device)
+    if load_model:
+        model, epochs_trained = helpers.load_model(load_model, GRUNet)
+        epochs += epochs_trained
+    else:
+        model = GRUNet(hidden_dim=hidden_dim, device=device, batch_size=batch_size)
+        model.to(device)
+        epochs_trained = 0
 
     # Defining loss function and optimizer
     criterion = nn.MSELoss()
@@ -63,17 +68,16 @@ def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epoc
     trn_losses = []
     trn_losses_lev = []
     val_losses_lev = []
+    h = model.init_hidden(batch_size)
 
-    for epoch in range(1,epochs+1):
+    for epoch in range(epochs_trained, epochs + 1):
         start_time = time.time()
-        h = model.init_hidden(batch_size)
         for i, (x, labels) in enumerate(train_data.batch_iterator(batch_size, tensor_output=True), start=1):
             # print(f'x({x.shape})')
             # print(f'labels({labels.shape})')
-            h = h.data
             model.zero_grad()
 
-            out, h = model(x.to(device).float(), h)
+            out, _ = model(x.to(device).float(), h)
 
             # print('Trying to get loss:')
             # print(f'out({out.shape})')
@@ -126,7 +130,7 @@ def main():
 
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
     # gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=32, epochs=500, save_step=50, view_step=5)
-    gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=32, epochs=2000, save_step=200, view_step=40)
+    gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=32, epochs=2000, save_step=200, view_step=40, load_model='torch_gru_8hid_32batch_2000epochs.pt')
     # gru_outputs, targets, gru_sMAPE = helpers.evaluate(gru_model, test_x, test_y, label_scalers)
 
 
