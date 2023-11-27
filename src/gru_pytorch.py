@@ -130,7 +130,7 @@ def main():
 
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
     # gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=32, epochs=500, save_step=50, view_step=5)
-    gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=32, epochs=2000, save_step=200, view_step=40, load_model='torch_gru_8hid_32batch_2000epochs.pt')
+    gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=32, epochs=4000, save_step=500, view_step=50, load_model='torch_gru_8hid_32batch_4000epochs.pt')
     # gru_outputs, targets, gru_sMAPE = helpers.evaluate(gru_model, test_x, test_y, label_scalers)
 
 

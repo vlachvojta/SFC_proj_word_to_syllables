@@ -71,13 +71,15 @@ def save_out_and_labels(val_out_words, val_labels_words, hidden_dim, epoch, batc
 def plot_losses(trn_losses, trn_losses_lev, val_losses_lev, hidden_dim, epoch, batch_size,
                 view_step: int, path:str = '.'):
     fig, axs = plt.subplots(1, 3, figsize=(15, 5))
-    axs[0].plot(trn_losses)
+    x_ticks = [epoch - len(trn_losses_lev) + e for e in range(len(trn_losses_lev))]
+    axs[0].plot(x_ticks, trn_losses)
     axs[0].set_title('Trn MSE Loss')
     axs[0].set_xlabel('Epochs')
-    axs[1].plot(trn_losses_lev)
+    axs[1].plot(x_ticks, trn_losses_lev)
     axs[1].set_title('Trn Levenshtein Loss')
     axs[1].set_xlabel('Epochs')
-    axs[2].plot([i * view_step for i in range(len(val_losses_lev))], val_losses_lev)
+    x_ticks = [epoch - (len(val_losses_lev) + i) * view_step for i in range(len(val_losses_lev))]
+    axs[2].plot(x_ticks, val_losses_lev)
     axs[2].set_title('Val Levenshtein Loss')
     axs[2].set_xlabel('Epochs')
     plt.tight_layout()
