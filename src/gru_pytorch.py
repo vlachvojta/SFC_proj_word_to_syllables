@@ -25,8 +25,8 @@ class GRUNet(nn.Module):
         self.batch_size = batch_size
 
         self.gru = nn.GRU(input_dim, hidden_dim, n_layers, batch_first=True, bias=False)
-        self.fc = nn.Linear(hidden_dim, output_dim)
         self.relu = nn.ReLU()
+        self.fc = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x, h):
         # print(f'FORWARD! x({x.shape})') #: {x}')
@@ -130,7 +130,7 @@ def main():
 
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
     # gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=32, epochs=500, save_step=50, view_step=5)
-    gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=256, epochs=4000, save_step=500, view_step=100, load_model_path='models')
+    gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=64, epochs=4000, save_step=500, view_step=100, load_model_path='models')
     # gru_outputs, targets, gru_sMAPE = helpers.evaluate(gru_model, test_x, test_y, label_scalers)
 
 

@@ -102,7 +102,7 @@ def load_model(model_path, model_class, path:str = 'models'):
         epochs = int(match_obj.groups(1)[0])
 
     model = model_class(hidden_dim=hidden_dim)
-    model.load_state_dict(torch.load(os.path.join(path, model_name)))
+    model.load_state_dict(torch.load(os.path.join(path, model_name), map_location=torch.device('cpu')))
     model.eval()
 
     print(f'Model loaded from {model_name}')
