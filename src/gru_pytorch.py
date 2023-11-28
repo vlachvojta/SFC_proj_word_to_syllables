@@ -123,7 +123,9 @@ def main():
     print(f'Loaded {len(trn_dataset)} training and {len(val_dataset)} validation samples.')
 
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
-    _ = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=64, epochs=1000, save_step=200, view_step=50, training_path='models/005_torch_gru_without_padding')
+    _ = train(trn_dataset, val_dataset, learn_rate=0.001, device=device,
+              batch_size=32, epochs=3_000, save_step=500, view_step=25,
+              training_path='models/008_CTC')
 
 
 if __name__ == '__main__':
