@@ -89,6 +89,7 @@ def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epoc
             epoch_labels += labels
             optimizer.step()
         current_time = time.time()
+        epoch_times.append(current_time-start_time)
         trn_losses_lev.append(helpers.levenstein_loss(epoch_outputs, epoch_labels))
         trn_losses.append(loss.item())
 
@@ -97,19 +98,18 @@ def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epoc
             val_losses_lev.append(val_loss_lev)
 
             print(f"Epoch {epoch}/{epochs}, trn losses: {trn_losses[-1]:.3f}, {trn_losses_lev[-1]:.2f} %, val losses: {val_losses_lev[-1]:.2f} %")
-            print(f"Time Elapsed for Epoch: {current_time - start_time:.2f} seconds")
+            print(f"Average epoch time in this view_step: {np.mean(epoch_times[-view_step:]):.2f} seconds")
             print('Example:')
             print(f'\tout: {val_out_words[:100]}')
             print(f'\tlab: {val_labels_words[:100]}')
             print('')
-        epoch_times.append(current_time-start_time)
 
         if not epoch == epochs_trained and epoch % save_step == 0:
             helpers.plot_losses(trn_losses, trn_losses_lev, val_losses_lev, hidden_dim, epoch, batch_size, view_step=view_step, path=training_path)
             helpers.save_model(model, hidden_dim, epoch, batch_size, path=training_path)
             helpers.save_out_and_labels(val_out_words, val_labels_words, hidden_dim, epoch, batch_size, path=training_path)
 
-    print(f"Total Training Time: {sum(epoch_times):.2f} seconds. ({sum(epoch_times)/epochs:.2f} seconds per epoch)")
+    print(f"Total Training Time: {sum(epoch_times):.2f} seconds. ({np.mean(epoch_times):.2f} seconds per epoch)")
 
     return model
 
