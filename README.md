@@ -4,9 +4,7 @@ SFC (soft computing) project at FIT (V|B)UT 2023/2024 winter semestr. Project co
 
 ## Zadání
 - původní funkční programy
-- Technická zprávaaa
 - Python (pytorch)
-
 - Přidat ukázkový běh (pokud programy berou nějaký parametry... nebo stačí default parametry asi...)
 - Technická zpráva na 4-6 stran (včetně úvodní strany + všech dodatků...)
 	- stučně popsat řešené problémy, stručné manuály pro překlad, spuštění...
@@ -51,6 +49,15 @@ https://pytorch.org/docs/stable/generated/torch.nn.GRU.html
 article with demo:
 https://blog.floydhub.com/gru-with-pytorch/
 
-## Kde pokračovat...
-- Momentálně ta síť dělá predikci typu n->1, potřeboval bych udělat to n->n 
-	- shiftnutí jakoby hotovo... (možná i to shiftnutý pomocí blank charů na začátku GT + na konci vstupu jako padding)
+
+## Co můžu udělat do konzultace
+
+- Zapracovat na prezentaci?
+- Zkusit matematicky aproximovat síť pro repeat mechanismus a začít trénovat od tama... (aspoň pochopím, jak to teda vevnitř funguje, looll...)
+- zkusit pohekovat obecný algoritmus trénování pomocí Net definition (GRUNet...) + NetWrapper (spešl init, loss, optim...)
+  - Zkusit CTCLoss? nebo prostě jinej typ chyby...
+  - oddělat padding při trénování na stabilní hodnotu a dát tam dycky jen max(len(words))
+- Zkusit větší síť, než jen jediná GRU vrstva => GDE trénovat? Zjistit PCSevcik. Zase Meta? blee...
+  - Najít nějaký real zdroje, jak to dělal tamten týpek (crazy RNN, CNN, všechno možný)
+
+
