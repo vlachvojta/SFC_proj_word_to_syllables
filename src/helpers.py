@@ -78,7 +78,7 @@ def plot_losses(trn_losses, trn_losses_lev, val_losses_lev, hidden_dim, epoch, b
     axs[1].plot(x_ticks, trn_losses_lev)
     axs[1].set_title('Trn Levenshtein Loss')
     axs[1].set_xlabel('Epochs')
-    x_ticks = [epoch - (len(val_losses_lev) + i) * view_step for i in range(len(val_losses_lev))]
+    x_ticks = [epoch + (i - len(val_losses_lev)) * view_step for i in range(len(val_losses_lev))]
     axs[2].plot(x_ticks, val_losses_lev)
     axs[2].set_title('Val Levenshtein Loss')
     axs[2].set_xlabel('Epochs')

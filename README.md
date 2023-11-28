@@ -54,7 +54,8 @@ https://blog.floydhub.com/gru-with-pytorch/
 
 - Zapracovat na prezentaci?
 - Zkusit matematicky aproximovat síť pro repeat mechanismus a začít trénovat od tama... (aspoň pochopím, jak to teda vevnitř funguje, looll...)
-- zkusit pohekovat obecný algoritmus trénování pomocí Net definition (GRUNet...) + NetWrapper (spešl init, loss, optim...)
+  - Zkusil jsem experiment, nic moc, ehm...
+- Pohekovat obecný algoritmus trénování pomocí Net definition (GRUNet...) + NetWrapper (spešl init, loss, optim...)
   - Zkusit CTCLoss? nebo prostě jinej typ chyby...
   - oddělat padding při trénování na stabilní hodnotu a dát tam dycky jen max(len(words))
 - Zkusit větší síť, než jen jediná GRU vrstva => GDE trénovat? Zjistit PCSevcik. Zase Meta? blee...
