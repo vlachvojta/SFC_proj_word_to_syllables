@@ -11,7 +11,7 @@ import helpers
 
 class Dataset:
     """Load dataset from file and provide interface for training and evaluating."""
-    def __init__(self, path, rnn_shift:int = 0, padding:int = 25):
+    def __init__(self, path, rnn_shift:int = 0, padding:int = 0):
         self.path = path
         self.rnn_shift = rnn_shift  # shift for RNN input and target
         self.padding = padding  # padding for RNN input and target
@@ -26,7 +26,7 @@ class Dataset:
         self.inputs = []
         self.targets = []
         for word in self.original_flat:
-            if self.padding < len(word) + self.rnn_shift:
+            if self.padding and self.padding < len(word) + self.rnn_shift:
                 word = word[:self.padding - self.rnn_shift]  # Cut word to fit padding
             input_word = word.replace('-', '')
             input_word = input_word + charset.padding_char * (self.padding - len(input_word) - self.rnn_shift) + charset.padding_char * self.rnn_shift
@@ -59,11 +59,14 @@ class Dataset:
             if not tensor_output:
                 yield self.inputs[start:end], self.targets[start:end]
             else:
-                inputs = torch.zeros(batch_size, self.padding, 1, dtype=torch.float)
-                targets = torch.zeros(batch_size, self.padding, 1, dtype=torch.float)
+                # Create tensors for input and target, len of tensor is given by max word in batch
+                max_len = max([len(word) for word in self.inputs[start:end]])
+
+                inputs = torch.zeros(batch_size, max_len, 1, dtype=torch.float)
+                targets = torch.zeros(batch_size, max_len, 1, dtype=torch.float)
                 for j in range(batch_size):
-                    inputs[j] = helpers.transpose(charset.word_to_tensor(self.inputs[start + j]))
-                    targets[j] = helpers.transpose(charset.word_to_tensor(self.targets[start + j]))
+                    inputs[j] = helpers.transpose(charset.word_to_tensor(self.inputs[start + j], padding=max_len))
+                    targets[j] = helpers.transpose(charset.word_to_tensor(self.targets[start + j], padding=max_len))
                 yield inputs, targets
     
     @staticmethod

@@ -47,15 +47,18 @@ class GRUNet(nn.Module):
 
 
 def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epochs=5, device='cpu',
-          batch_size=32, save_step=5, view_step=1, load_model_path:str = None):
+          batch_size=32, save_step=5, view_step=1, training_path:str = None):
     # Instantiating the models
-    if load_model_path:
-        model, epochs_trained = helpers.load_model(load_model_path, GRUNet)
+    model, epochs_trained = None, 0
+    if training_path and os.path.isdir(training_path):
+        if not os.path.isdir(training_path):
+            os.makedirs(training_path)
+        model, epochs_trained = helpers.load_model(GRUNet, training_path)
         epochs += epochs_trained
-    else:
+
+    if not model:
         model = GRUNet(hidden_dim=hidden_dim, device=device, batch_size=batch_size)
         model.to(device)
-        epochs_trained = 0
 
     # Defining loss function and optimizer
     criterion = nn.MSELoss()
@@ -68,6 +71,8 @@ def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epoc
     trn_losses = []
     trn_losses_lev = []
     val_losses_lev = []
+    epoch_outputs = []
+    epoch_labels = []
     h = model.init_hidden(batch_size)
 
     for epoch in range(epochs_trained, epochs + 1):
@@ -79,13 +84,15 @@ def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epoc
             loss.backward()
 
             outputs = [charset.tensor_to_word(o) for o in out]
+            epoch_outputs += outputs
             labels = [charset.tensor_to_word(l) for l in labels]
+            epoch_labels += labels
             optimizer.step()
-        trn_losses_lev.append(helpers.levenstein_loss(outputs, labels))
-        trn_losses.append(loss.item())
         current_time = time.time()
+        trn_losses_lev.append(helpers.levenstein_loss(epoch_outputs, epoch_labels))
+        trn_losses.append(loss.item())
 
-        if epoch % view_step == 0:
+        if not epoch == epochs_trained and epoch % view_step == 0:
             val_loss_lev, val_out_words, val_labels_words = helpers.test_val(model, val_data, device, batch_size)
             val_losses_lev.append(val_loss_lev)
 
@@ -97,10 +104,10 @@ def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epoc
             print('')
         epoch_times.append(current_time-start_time)
 
-        if epoch % save_step == 0:
-            helpers.plot_losses(trn_losses, trn_losses_lev, val_losses_lev, hidden_dim, epoch, batch_size, view_step=view_step, path='models')
-            helpers.save_model(model, hidden_dim, epoch, batch_size, path='models')
-            helpers.save_out_and_labels(val_out_words, val_labels_words, hidden_dim, epoch, batch_size, path='models')
+        if not epoch == epochs_trained and epoch % save_step == 0:
+            helpers.plot_losses(trn_losses, trn_losses_lev, val_losses_lev, hidden_dim, epoch, batch_size, view_step=view_step, path=training_path)
+            helpers.save_model(model, hidden_dim, epoch, batch_size, path=training_path)
+            helpers.save_out_and_labels(val_out_words, val_labels_words, hidden_dim, epoch, batch_size, path=training_path)
 
     print(f"Total Training Time: {sum(epoch_times):.2f} seconds. ({sum(epoch_times)/epochs:.2f} seconds per epoch)")
 
@@ -108,17 +115,15 @@ def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epoc
 
 
 def main():
-    trn_file = os.path.join("dataset", "ssc_29-06-16", "set_10000_2500", "trn.txt")
-    val_file = os.path.join("dataset", "ssc_29-06-16", "set_10000_2500", "val.txt")
+    trn_file = os.path.join("dataset", "ssc_29-06-16", "set_1000_250", "trn.txt")
+    val_file = os.path.join("dataset", "ssc_29-06-16", "set_1000_250", "val.txt")
 
-    padding = 20
-
-    trn_dataset = Dataset(trn_file, rnn_shift=0, padding=padding)
-    val_dataset = Dataset(val_file, rnn_shift=0, padding=padding)
+    trn_dataset = Dataset(trn_file)
+    val_dataset = Dataset(val_file)
     print(f'Loaded {len(trn_dataset)} training and {len(val_dataset)} validation samples.')
 
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
-    gru_model = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=64, epochs=100_000, save_step=1000, view_step=100, load_model_path='models')
+    _ = train(trn_dataset, val_dataset, learn_rate=0.001, device=device, batch_size=64, epochs=1000, save_step=200, view_step=50, training_path='models/005_torch_gru_without_padding')
 
 
 if __name__ == '__main__':

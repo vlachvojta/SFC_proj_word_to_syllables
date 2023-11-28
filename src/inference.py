@@ -22,8 +22,7 @@ def transcribe_word(model, word:str):
 
 
 def main():
-    model_name = helpers.find_last_model('models')
-    model, _ = helpers.load_model(model_name, GRUNet)
+    model, _ = helpers.load_model(GRUNet, 'models')
 
     while True:
         word = 'kulaťoučké'
