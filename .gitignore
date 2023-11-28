@@ -2,6 +2,9 @@
 *.pt
 models/
 
+# Zip file for submission
+23-xvlach22.zip
+
 # VS Code
 .code/
 
