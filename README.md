@@ -52,13 +52,33 @@ https://blog.floydhub.com/gru-with-pytorch/
 
 ## Co můžu udělat do konzultace
 
-- Zapracovat na prezentaci?
+~~- Zapracovat na prezentaci?~~
 - Zkusit matematicky aproximovat síť pro repeat mechanismus a začít trénovat od tama... (aspoň pochopím, jak to teda vevnitř funguje, looll...)
-  - Zkusil jsem experiment, nic moc, ehm...
+  - Zkusil jsem experiment, jestli zvládne vůbec síť se naučit opakování s 8 hidden_dims, nic moc, ehm...
+    - Zkusit větší dims (+ novou strukturu fc, gru, fc ?)
+- Zkusit větší síť, než jen jediná GRU vrstva => GDE trénovat? Zjistit PCSevcik. Zase Meta? blee...
+  - Najít nějaký real zdroje, jak to dělal tamten týpek (crazy RNN, CNN, všechno možný, search Hyphenation)
 - Pohekovat obecný algoritmus trénování pomocí Net definition (GRUNet...) + NetWrapper (spešl init, loss, optim...)
   - Zkusit CTCLoss? nebo prostě jinej typ chyby...
   - oddělat padding při trénování na stabilní hodnotu a dát tam dycky jen max(len(words))
-- Zkusit větší síť, než jen jediná GRU vrstva => GDE trénovat? Zjistit PCSevcik. Zase Meta? blee...
-  - Najít nějaký real zdroje, jak to dělal tamten týpek (crazy RNN, CNN, všechno možný)
 
 
+Jak vylepšit síť:
+- zkusit CTC Loss?
+- dodělat embedding encoder + decoder
+- zkusit změnit task na binární klasifikaci je/není konec slabiky (0-1 sigmoid aktivace?)
+sentencepiece -> tokenizace
+"NLLLoss je basically normal cross-entropie"
+
+### SFC after konzultace: 
+
+- dodělat, aby to fungovalo
+- primárně torch
+- ideálně zkusit vlastní GRU včetně chyby aaa
+
+- v obhajobě se k tomu přiznat...
+
+### obhajoba: 
+ - mini úvod do tématu + teorie
+- HLAVNĚ UKÁZAT funkčnost...
++ diskuze
