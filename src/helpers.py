@@ -112,9 +112,7 @@ def load_model(model_class, path:str = 'models'):
     model.load_state_dict(torch.load(os.path.join(path, model_name), map_location=torch.device('cpu')))
     model.eval()
 
-    print(f'Model loaded from {model_name}')
-    print(model)
-    print(f'Epochs trained: {epochs}')
+    print(f'Model loaded from {model_name}. {epochs} epochs trained.')
     return model, epochs
 
 

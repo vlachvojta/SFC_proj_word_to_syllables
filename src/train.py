@@ -16,34 +16,7 @@ import charset
 import helpers
 
 
-class GRUNet(nn.Module):
-    def __init__(self, input_dim=1, hidden_dim=8, output_dim=1, n_layers=1, device='cpu', batch_size=32):
-        super(GRUNet, self).__init__()
-        self.hidden_dim = hidden_dim
-        self.n_layers = n_layers
-        self.device = device
-        self.batch_size = batch_size
-
-        self.gru = nn.GRU(input_dim, hidden_dim, n_layers, batch_first=True, bias=False)
-        self.relu = nn.ReLU()
-        self.fc = nn.Linear(hidden_dim, output_dim)
-
-    def forward(self, x, h):
-        # print(f'FORWARD! x({x.shape})') #: {x}')
-        out, h = self.gru(x, h)
-        # print(f'out({out.shape})')#: {out}')
-        # print(f'h({h.shape})')#: {h}')
-        activated = self.relu(out)
-        # print(f'activated({activated.shape})')#: {activated}')
-        out = self.fc(activated)
-        # print(f'fc(relu(out)) ({out.shape})')#: {out}')
-        return out, h
-
-    def init_hidden(self, batch_size:int=None):
-        weight = next(self.parameters()).data
-        if not batch_size:
-            return weight.new(self.n_layers, self.hidden_dim).zero_().to(self.device)
-        return weight.new(self.n_layers, batch_size, self.hidden_dim).zero_().to(self.device)
+from net_definitions import GRUNet, GRUNetEncDec
 
 
 def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epochs=5, device='cpu',
@@ -59,6 +32,9 @@ def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epoc
     if not model:
         model = GRUNet(hidden_dim=hidden_dim, device=device, batch_size=batch_size)
         model.to(device)
+
+    print(f'Using device: {device}')
+    print(f'Using model:\n{model}')
 
     # Defining loss function and optimizer
     criterion = nn.MSELoss()
@@ -124,9 +100,9 @@ def main():
     print(f'Loaded {len(trn_dataset)} training and {len(val_dataset)} validation samples.')
 
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
-    _ = train(trn_dataset, val_dataset, learn_rate=0.001, device=device,
-              batch_size=32, epochs=3_000, save_step=500, view_step=5,
-              training_path='models')
+    _ = train(trn_dataset, val_dataset, learn_rate=0.001, hidden_dim=256, device=device,
+              batch_size=250, epochs=50_000, save_step=500, view_step=10,
+              training_path='models/010_enc_dec_256h')
 
 
 if __name__ == '__main__':
