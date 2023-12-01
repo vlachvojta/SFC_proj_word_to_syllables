@@ -38,21 +38,25 @@ def save_model(model, hidden_dim, epoch, batch_size, path:str = '.'):
     print(f'Model saved to {model_name}')
 
 def test_val(model, val_data, device, batch_size):
+    in_words = []
     out_words = []
     labels_words = []
 
     for i, (x, labels) in enumerate(val_data.batch_iterator(batch_size, tensor_output=True), start=1):
         h_start = model.init_hidden(batch_size=batch_size)
         out, _ = model(x.to(device).float(), h_start.to(device).float())
+        inputs = [charset.tensor_to_word(i) for i in x]
         outputs = [charset.tensor_to_word(o) for o in out]
         labels = [charset.tensor_to_word(l) for l in labels]
+        in_words += inputs
         out_words += outputs
         labels_words += labels
 
+    in_words = ','.join(in_words)
     out_words = ','.join(out_words)
     labels_words = ','.join(labels_words)
 
-    return levenstein_loss(out_words, labels_words), out_words, labels_words
+    return levenstein_loss(out_words, labels_words), in_words, out_words, labels_words
 
 def save_out_and_labels(val_out_words, val_labels_words, hidden_dim, epoch, batch_size, path='models'):
     if not os.path.isdir(path):

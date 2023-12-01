@@ -94,12 +94,13 @@ def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epoc
         trn_losses.append(loss.item())
 
         if not epoch == epochs_trained and epoch % view_step == 0:
-            val_loss_lev, val_out_words, val_labels_words = helpers.test_val(model, val_data, device, batch_size)
+            val_loss_lev, val_in_words, val_out_words, val_labels_words = helpers.test_val(model, val_data, device, batch_size)
             val_losses_lev.append(val_loss_lev)
 
             print(f"Epoch {epoch}/{epochs}, trn losses: {trn_losses[-1]:.3f}, {trn_losses_lev[-1]:.2f} %, val losses: {val_losses_lev[-1]:.2f} %")
             print(f"Average epoch time in this view_step: {np.mean(epoch_times[-view_step:]):.2f} seconds")
             print('Example:')
+            print(f'\tin:  {val_in_words[:100]}')
             print(f'\tout: {val_out_words[:100]}')
             print(f'\tlab: {val_labels_words[:100]}')
             print('')
@@ -124,8 +125,8 @@ def main():
 
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
     _ = train(trn_dataset, val_dataset, learn_rate=0.001, device=device,
-              batch_size=32, epochs=3_000, save_step=500, view_step=25,
-              training_path='models/008_CTC')
+              batch_size=32, epochs=3_000, save_step=500, view_step=5,
+              training_path='models')
 
 
 if __name__ == '__main__':
