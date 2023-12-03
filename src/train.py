@@ -13,31 +13,34 @@ from torch import nn
 
 from dataset import Dataset
 import charset
+from charset import Task
 import helpers
 
 
-from net_definitions import GRUNet, GRUNetEncDec
+from net_definitions import *
 
 
-def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epochs=5, device='cpu',
+def train(net, train_data: Dataset, val_data: Dataset, task: Task, learn_rate, hidden_dim=8, epochs=5, device='cpu',
           batch_size=32, save_step=5, view_step=1, training_path:str = None):
     # Instantiating the models
     model, epochs_trained = None, 0
     if training_path and os.path.isdir(training_path):
         if not os.path.isdir(training_path):
             os.makedirs(training_path)
-        model, epochs_trained = helpers.load_model(GRUNet, training_path)
+        model, epochs_trained = helpers.load_model(net, training_path)
         epochs += epochs_trained
 
     if not model:
-        model = GRUNet(hidden_dim=hidden_dim, device=device, batch_size=batch_size)
-        model.to(device)
+        model = net(hidden_dim=hidden_dim, device=device, batch_size=batch_size)
 
+    model.to(device)
     print(f'Using device: {device}')
     print(f'Using model:\n{model}')
 
     # Defining loss function and optimizer
     criterion = nn.MSELoss()
+    if task == Task.BINARY_CLASSIFICATION or task == Task.BINARY_CLASSIFICATION_EMBEDDING:
+        criterion = nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learn_rate)
 
     model.train()
@@ -47,30 +50,32 @@ def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epoc
     trn_losses = []
     trn_losses_lev = []
     val_losses_lev = []
-    epoch_outputs = []
-    epoch_labels = []
-    h = model.init_hidden(batch_size)
+    h = None  # model.init_hidden(batch_size).to(device)
 
     for epoch in range(epochs_trained, epochs + 1):
+        epoch_outputs = []
+        epoch_labels = []
         start_time = time.time()
-        for i, (x, labels) in enumerate(train_data.batch_iterator(batch_size, tensor_output=True), start=1):
-            model.zero_grad()
-            out, _ = model(x.to(device).float(), h)
-            loss = criterion(out, labels.to(device).float())
-            loss.backward()
+        model.train()
 
-            outputs = [charset.tensor_to_word(o) for o in out]
-            epoch_outputs += outputs
-            labels = [charset.tensor_to_word(l) for l in labels]
-            epoch_labels += labels
+        for i, (x, labels) in enumerate(train_data.batch_iterator(batch_size), start=1):
+            model.zero_grad()
+            out, _ = model(x.to(device), h)
+            loss = criterion(out, labels.to(device))
+            optimizer.zero_grad()
+            loss.backward()
             optimizer.step()
-        current_time = time.time()
-        epoch_times.append(current_time-start_time)
+
+            outputs = [charset.tensor_to_word(o, task=task) for o in out]
+            epoch_outputs += outputs
+            labels = [charset.tensor_to_word(l, task=task) for l in labels]
+            epoch_labels += labels
         trn_losses_lev.append(helpers.levenstein_loss(epoch_outputs, epoch_labels))
         trn_losses.append(loss.item())
 
         if not epoch == epochs_trained and epoch % view_step == 0:
-            val_loss_lev, val_in_words, val_out_words, val_labels_words = helpers.test_val(model, val_data, device, batch_size)
+            model.eval()
+            val_loss_lev, val_in_words, val_out_words, val_labels_words = helpers.test_val(model, val_data, device, batch_size, task=task)
             val_losses_lev.append(val_loss_lev)
 
             print(f"Epoch {epoch}/{epochs}, trn losses: {trn_losses[-1]:.3f}, {trn_losses_lev[-1]:.2f} %, val losses: {val_losses_lev[-1]:.2f} %")
@@ -85,6 +90,9 @@ def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epoc
             helpers.plot_losses(trn_losses, trn_losses_lev, val_losses_lev, hidden_dim, epoch, batch_size, view_step=view_step, path=training_path)
             helpers.save_model(model, hidden_dim, epoch, batch_size, path=training_path)
             helpers.save_out_and_labels(val_out_words, val_labels_words, hidden_dim, epoch, batch_size, path=training_path)
+        current_time = time.time()
+        print(f'epoch time: {current_time-start_time:.2f} seconds')
+        epoch_times.append(current_time-start_time)
 
     print(f"Total Training Time: {sum(epoch_times):.2f} seconds. ({np.mean(epoch_times):.2f} seconds per epoch)")
 
@@ -92,17 +100,19 @@ def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epoc
 
 
 def main():
-    trn_file = os.path.join("dataset", "ssc_29-06-16", "set_1000_250", "trn.txt")
-    val_file = os.path.join("dataset", "ssc_29-06-16", "set_1000_250", "val.txt")
+    set_size = 'set_10000_2500'
+    trn_file = os.path.join("dataset", "ssc_29-06-16", set_size, "trn.txt")
+    val_file = os.path.join("dataset", "ssc_29-06-16", set_size, "val.txt")
 
-    trn_dataset = Dataset(trn_file)
-    val_dataset = Dataset(val_file)
+    task = Task.BINARY_CLASSIFICATION_EMBEDDING
+    trn_dataset = Dataset(trn_file, task=task)
+    val_dataset = Dataset(val_file, task=task)
     print(f'Loaded {len(trn_dataset)} training and {len(val_dataset)} validation samples.')
 
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
-    _ = train(trn_dataset, val_dataset, learn_rate=0.001, hidden_dim=256, device=device,
-              batch_size=250, epochs=50_000, save_step=500, view_step=10,
-              training_path='models/010_enc_dec_256h')
+    _ = train(GRUNetBinaryEmbeding, trn_dataset, val_dataset, task, learn_rate=0.01, hidden_dim=256, device=device,
+              batch_size=250, epochs=1_000, save_step=100, view_step=50,
+              training_path='models/018_gru_binary_emb_256h_10_000_data')
 
 
 if __name__ == '__main__':

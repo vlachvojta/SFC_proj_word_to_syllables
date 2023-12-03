@@ -6,15 +6,17 @@ import re
 import torch
 
 import charset
+from charset import Task
 import helpers
 
 
 class Dataset:
     """Load dataset from file and provide interface for training and evaluating."""
-    def __init__(self, path, rnn_shift:int = 0, padding:int = 0):
+    def __init__(self, path, rnn_shift:int = 0, padding:int = 0, task:Task = Task.NORMAL):
         self.path = path
         self.rnn_shift = rnn_shift  # shift for RNN input and target
         self.padding = padding  # padding for RNN input and target
+        self.task = task
 
         # read lines of file
         with open(path, 'r', encoding='utf-8') as f:
@@ -48,27 +50,32 @@ class Dataset:
 
         return x, target
 
-    def batch_iterator(self, batch_size, tensor_output=False):
-        """Yield batches as tuple of lists: (trn-in, trn-target)."""
+    def batch_iterator(self, batch_size):
+        """Yield batches as tensors."""
+        # Create tensors for input and target, len of tensor is given by max word in batch
+
         batch_size = min(batch_size, len(self))
         batch_count = len(self) // batch_size
 
         for i in range(batch_count):
             start = batch_size * i
             end = batch_size * (i + 1)
-            if not tensor_output:
-                yield self.inputs[start:end], self.targets[start:end]
-            else:
-                # Create tensors for input and target, len of tensor is given by max word in batch
-                max_len = max([len(word) for word in self.inputs[start:end]])
+            max_len = max([len(word) for word in self.inputs[start:end]])
 
+            if self.task == Task.BINARY_CLASSIFICATION_EMBEDDING:
+                inputs = torch.zeros(batch_size, max_len, dtype=torch.int)
+            else:
                 inputs = torch.zeros(batch_size, max_len, 1, dtype=torch.float)
-                targets = torch.zeros(batch_size, max_len, 1, dtype=torch.float)
-                for j in range(batch_size):
+            targets = torch.zeros(batch_size, max_len, 1, dtype=torch.float)
+
+            for j in range(batch_size):
+                if self.task == Task.BINARY_CLASSIFICATION_EMBEDDING:
+                    inputs[j] = charset.word_to_tensor(self.inputs[start + j], padding=max_len)
+                else:
                     inputs[j] = helpers.transpose(charset.word_to_tensor(self.inputs[start + j], padding=max_len))
-                    targets[j] = helpers.transpose(charset.word_to_tensor(self.targets[start + j], padding=max_len))
-                yield inputs, targets
-    
+                targets[j] = helpers.transpose(charset.word_to_tensor(self.targets[start + j], padding=max_len, task=self.task))
+            yield inputs, targets
+
     @staticmethod
     def flatten_words(words):
         original_flat = []

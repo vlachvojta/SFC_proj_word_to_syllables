@@ -132,7 +132,7 @@ def train(train_data: Dataset, val_data: Dataset, learn_rate, hidden_dim=8, epoc
 
     for epoch in range(1, epochs + 1):
         start_time = time.time()
-        for i, (x, labels) in enumerate(train_data.batch_iterator(batch_size, tensor_output=True), start=1):
+        for i, (x, labels) in enumerate(train_data.batch_iterator(batch_size), start=1):
             print(f'x({x.shape}):')
             print(f'labels({labels.shape})')
 

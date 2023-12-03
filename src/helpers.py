@@ -6,17 +6,23 @@ import torch
 import Levenshtein as lev
 
 import charset
+from charset import Task
 
+ERROR_LEV_LOSS = 4242.42
 
-def levenstein_loss(a, b):
-    if isinstance(a, list):
-        a = ''.join(a)
-    if isinstance(b, list):
-        b = ''.join(b)
-    return 100.0 * lev.distance(a, b) / len(b)
+def levenstein_loss(out, label):
+    if isinstance(out, list):
+        out = ''.join(out)
+    if isinstance(label, list):
+        label = ''.join(label)
+
+    if len(label) == 0:
+        return ERROR_LEV_LOSS
+    return 100.0 * lev.distance(out, label) / len(label)
 
 
 def transpose(data: torch.Tensor):
+    """Transpose last dimension of a tensor to the correct shape."""
     if not data.shape[-1] == 1:
         # Transpose: Add a dimension to the end of the tensor
         new_shape = [dim for dim in data.shape] + [1]
@@ -37,17 +43,16 @@ def save_model(model, hidden_dim, epoch, batch_size, path:str = '.'):
     torch.save(model.state_dict(), os.path.join(path, model_name))
     print(f'Model saved to {model_name}')
 
-def test_val(model, val_data, device, batch_size):
+def test_val(model, val_data, device, batch_size, task):
     in_words = []
     out_words = []
     labels_words = []
 
-    for i, (x, labels) in enumerate(val_data.batch_iterator(batch_size, tensor_output=True), start=1):
-        h_start = model.init_hidden(batch_size=batch_size)
-        out, _ = model(x.to(device).float(), h_start.to(device).float())
-        inputs = [charset.tensor_to_word(i) for i in x]
-        outputs = [charset.tensor_to_word(o) for o in out]
-        labels = [charset.tensor_to_word(l) for l in labels]
+    for i, (x, labels) in enumerate(val_data.batch_iterator(batch_size), start=1):
+        out, _ = model(x.to(device))
+        inputs = [charset.tensor_to_word(i, task=task) for i in x]
+        outputs = [charset.tensor_to_word(o, task=task) for o in out]
+        labels = [charset.tensor_to_word(l, task=task) for l in labels]
         in_words += inputs
         out_words += outputs
         labels_words += labels
@@ -79,13 +84,16 @@ def plot_losses(trn_losses, trn_losses_lev, val_losses_lev, hidden_dim, epoch, b
     axs[0].plot(x_ticks, trn_losses)
     axs[0].set_title('Trn MSE Loss')
     axs[0].set_xlabel('Epochs')
+    axs[0].set_yscale('log')
     axs[1].plot(x_ticks, trn_losses_lev)
     axs[1].set_title('Trn Levenshtein Loss')
     axs[1].set_xlabel('Epochs')
     x_ticks = [epoch + (i - len(val_losses_lev)) * view_step for i in range(len(val_losses_lev))]
+    axs[1].set_yscale('log')
     axs[2].plot(x_ticks, val_losses_lev)
     axs[2].set_title('Val Levenshtein Loss')
     axs[2].set_xlabel('Epochs')
+    axs[2].set_yscale('log')
     plt.tight_layout()
 
     if not os.path.isdir(path):
