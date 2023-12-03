@@ -100,7 +100,7 @@ def train(net, train_data: Dataset, val_data: Dataset, task: Task, learn_rate, h
 
 
 def main():
-    set_size = 'set_10000_2500'
+    set_size = 'set_29000_9700'
     trn_file = os.path.join("dataset", "ssc_29-06-16", set_size, "trn.txt")
     val_file = os.path.join("dataset", "ssc_29-06-16", set_size, "val.txt")
 
@@ -110,9 +110,9 @@ def main():
     print(f'Loaded {len(trn_dataset)} training and {len(val_dataset)} validation samples.')
 
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
-    _ = train(GRUNetBinaryEmbeding, trn_dataset, val_dataset, task, learn_rate=0.01, hidden_dim=256, device=device,
+    _ = train(GRUNetBinaryEmbeding, trn_dataset, val_dataset, task, learn_rate=0.001, hidden_dim=256, device=device,
               batch_size=250, epochs=1_000, save_step=100, view_step=50,
-              training_path='models/018_gru_binary_emb_256h_10_000_data')
+              training_path='models/019_gru_binary_emb_256h_29000data_dropout')
 
 
 if __name__ == '__main__':

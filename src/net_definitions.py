@@ -72,6 +72,7 @@ class GRUNetBinaryEmbeding(nn.Module):
 
         self.embed = nn.Embedding(40, hidden_dim)  # 40 is the number of characters in the vocabulary
         self.gru = nn.GRU(hidden_dim, hidden_dim, n_layers, batch_first=True, bias=False)
+        self.drop = nn.Dropout(0.2)
         self.relu2 = nn.ReLU()
         self.decoder = nn.Linear(hidden_dim, output_dim)
         self.sigm = nn.Sigmoid()
@@ -82,7 +83,8 @@ class GRUNetBinaryEmbeding(nn.Module):
         emb = self.embed(x)
         # print(f'emb({emb.shape})') #: {emb}')
         out, h = self.gru(emb, h)
-        activated = self.relu2(out)
+        dropped = self.drop(out)
+        activated = self.relu2(dropped)
         out = self.decoder(activated)
         return self.sigm(out), h
 
