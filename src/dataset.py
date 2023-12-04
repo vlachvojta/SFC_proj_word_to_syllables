@@ -1,6 +1,5 @@
 """Class defining dataset in this project and its interface."""
 import os
-import unicodedata
 import re
 
 import torch
@@ -23,7 +22,7 @@ class Dataset:
             self.lines = f.readlines()
 
         self.original = [line.strip('\r\n').lower() for line in self.lines]
-        self.original_flat = self.flatten_words(self.original)
+        self.original_flat = helpers.flatten_words(self.original)
 
         self.inputs = []
         self.targets = []
@@ -75,15 +74,6 @@ class Dataset:
                     inputs[j] = helpers.transpose(charset.word_to_tensor(self.inputs[start + j], padding=max_len))
                 targets[j] = helpers.transpose(charset.word_to_tensor(self.targets[start + j], padding=max_len, task=self.task))
             yield inputs, targets
-
-    @staticmethod
-    def flatten_words(words):
-        original_flat = []
-        for word in words:
-            flat = unicodedata.normalize('NFD', word).encode('ascii', 'ignore').decode()  # normalize weird czech symbols to basic ASCII symbols
-            flat = ''.join(c for c in flat if re.match(r'[a-z\-]', c))
-            original_flat.append(flat)
-        return original_flat
 
 
 def test():

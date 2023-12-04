@@ -1,5 +1,6 @@
 import os
 import re
+import unicodedata
 
 import matplotlib.pyplot as plt
 import torch
@@ -103,8 +104,8 @@ def plot_losses(trn_losses, trn_losses_lev, val_losses_lev, hidden_dim, epoch, b
 
 
 def load_model(model_class, path:str = 'models'):
-    model_name = find_last_model(path)
-    if not model_name:
+    path, model_name = find_last_model(path)
+    if not path or not model_name:
         return None, 0
 
     hidden_dim = 0
@@ -120,12 +121,52 @@ def load_model(model_class, path:str = 'models'):
     model.load_state_dict(torch.load(os.path.join(path, model_name), map_location=torch.device('cpu')))
     model.eval()
 
-    print(f'Model loaded from {model_name}. {epochs} epochs trained.')
+    print(f'Model loaded from {os.path.join(path, model_name)}. {epochs} epochs trained.')
     return model, epochs
 
 
-def find_last_model(path:str = 'models'):
-    model_names = [model for model in os.listdir(path) if model.endswith('.pt')]
-    if not model_names:
-        return None
-    return sorted(model_names, key=lambda x: int(re.match(r'\S+_(\d+)epochs', x).groups(1)[0]))[-1]
+def find_last_model(path:str = 'models') -> (str, str):
+    if os.path.isdir(path):
+        model_names = [model for model in os.listdir(path) if model.endswith('.pt')]
+        if model_names:
+            last_model = sorted(model_names, key=lambda x: int(re.match(r'\S+_(\d+)epochs', x).groups(1)[0]))[-1]
+            return path, last_model
+    if os.path.isfile(path) and path.endswith('.pt'):
+        return os.path.dirname(path), os.path.basename(path)
+    return None, None
+
+def char_classes_to_word(orig: str, classes: list):
+    """Converts a list of character classes to a word."""
+    word = ''
+    for i, c in enumerate(classes):
+        if c == '0':
+            word += orig[i]
+        elif c == '1':
+            word += orig[i]
+            word += '-'
+        else:
+            raise ValueError(f'Unknown character class: {c}')
+    return word
+
+def transcribe_word(model, word:str, task:Task = Task.NORMAL, tuple_out = False):
+    # prepare word to input into model
+    word_flattened = flatten_words([word])[0]
+    word_tensor = charset.word_to_tensor(word_flattened, task=Task.BINARY_CLASSIFICATION_EMBEDDING)
+    # word_tensor = helpers.transpose(word_tensor)
+
+    # get output from model
+    out, _ = model(word_tensor)
+    char_classes = charset.tensor_to_word(out, task=Task.BINARY_CLASSIFICATION_EMBEDDING)
+
+    if tuple_out:
+        return char_classes_to_word(word, char_classes), char_classes
+
+    return char_classes_to_word(word, char_classes)
+
+def flatten_words(words):
+    original_flat = []
+    for word in words:
+        flat = unicodedata.normalize('NFD', word).encode('ascii', 'ignore').decode()  # normalize weird czech symbols to basic ASCII symbols
+        flat = ''.join(c for c in flat if re.match(r'[a-z\-]', c))
+        original_flat.append(flat)
+    return original_flat

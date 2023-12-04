@@ -78,15 +78,19 @@ class GRUNetBinaryEmbeding(nn.Module):
         self.sigm = nn.Sigmoid()
 
     def forward(self, x, h=None):
-        # print('FORWARD!')
-        # print(f'x({x.shape})') #: {x}')
+        print('FORWARD!')
+        print(f'x({x.shape}): {x}')
         emb = self.embed(x)
-        # print(f'emb({emb.shape})') #: {emb}')
+        print(f'emb({emb.shape}): {emb}')
         out, h = self.gru(emb, h)
         dropped = self.drop(out)
+        print(f'dropped ({dropped.shape}): {dropped}')
         activated = self.relu2(dropped)
+        print(f'activated ({activated.shape}): {activated}')
         out = self.decoder(activated)
-        return self.sigm(out), h
+        activated = self.sigm(out)
+        print(f'activated ({activated.shape}): {activated}')
+        return activated, h
 
 class GRUNetEncDec(nn.Module):
     def __init__(self, input_dim=1, hidden_dim=8, output_dim=1, n_layers=1, device='cpu', batch_size=32):

@@ -73,7 +73,7 @@ def train(net, train_data: Dataset, val_data: Dataset, task: Task, learn_rate, h
         trn_losses_lev.append(helpers.levenstein_loss(epoch_outputs, epoch_labels))
         trn_losses.append(loss.item())
 
-        if not epoch == epochs_trained and epoch % view_step == 0:
+        if epoch % view_step == 0:
             model.eval()
             val_loss_lev, val_in_words, val_out_words, val_labels_words = helpers.test_val(model, val_data, device, batch_size, task=task)
             val_losses_lev.append(val_loss_lev)
@@ -86,7 +86,7 @@ def train(net, train_data: Dataset, val_data: Dataset, task: Task, learn_rate, h
             print(f'\tlab: {val_labels_words[:100]}')
             print('')
 
-        if not epoch == epochs_trained and epoch % save_step == 0:
+        if epoch % save_step == 0:
             helpers.plot_losses(trn_losses, trn_losses_lev, val_losses_lev, hidden_dim, epoch, batch_size, view_step=view_step, path=training_path)
             helpers.save_model(model, hidden_dim, epoch, batch_size, path=training_path)
             helpers.save_out_and_labels(val_out_words, val_labels_words, hidden_dim, epoch, batch_size, path=training_path)
@@ -110,9 +110,9 @@ def main():
     print(f'Loaded {len(trn_dataset)} training and {len(val_dataset)} validation samples.')
 
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
-    _ = train(GRUNetBinaryEmbeding, trn_dataset, val_dataset, task, learn_rate=0.001, hidden_dim=256, device=device,
-              batch_size=250, epochs=10_000, save_step=50, view_step=10,
-              training_path='models/019_gru_binary_emb_256h_29000data_dropout')
+    _ = train(GRUNetBinaryEmbeding, trn_dataset, val_dataset, task, learn_rate=0.0001, hidden_dim=256, device=device,
+              batch_size=250, epochs=2_000, save_step=50, view_step=10,
+              training_path='models/020_gru_binary_emb_256h_29000data_dropout_slower')
 
 
 if __name__ == '__main__':
