@@ -82,3 +82,13 @@ sentencepiece -> tokenizace
  - mini úvod do tématu + teorie
 - HLAVNĚ UKÁZAT funkčnost...
 + diskuze
+
+
+
+## Co je momentální problém:
+- inference nefunguje na posledním modelu.
+    - funguje na nějakým jiným třeba?
+	- zkusit nějak pohekovat inferenci v rámci train algo? (aspoň otestovat prostě)
+	
+
+
