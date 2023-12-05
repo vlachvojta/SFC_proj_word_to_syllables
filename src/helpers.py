@@ -155,7 +155,8 @@ def transcribe_word(model, word:str, task:Task = Task.NORMAL, tuple_out = False)
     # word_tensor = helpers.transpose(word_tensor)
 
     # get output from model
-    out, _ = model(word_tensor)
+    with torch.no_grad():
+        out, _ = model(word_tensor)
     char_classes = charset.tensor_to_word(out, task=Task.BINARY_CLASSIFICATION_EMBEDDING)
 
     if tuple_out:

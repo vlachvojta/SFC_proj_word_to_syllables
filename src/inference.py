@@ -12,9 +12,10 @@ from net_definitions import *
 
 def main():
     model, _ = helpers.load_model(GRUNetBinaryEmbeding, 
-        'models/019_gru_binary_emb_256h_29000data_dropout/torch_gru_256hid_250batch_500epochs.pt')
+        'models/020_gru_binary_emb_256h_29000data_dropout_slower')
+        # 'models/019_gru_binary_emb_256h_29000data_dropout/torch_gru_256hid_250batch_500epochs.pt')
     model.eval()
-    print('Model loaded.')
+    print('Model:')
     print(model)
     print()
 
