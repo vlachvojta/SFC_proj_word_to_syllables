@@ -85,10 +85,14 @@ sentencepiece -> tokenizace
 
 
 
-## Co je momentální problém:
-- inference nefunguje na posledním modelu.
-    - funguje na nějakým jiným třeba?
-	- zkusit nějak pohekovat inferenci v rámci train algo? (aspoň otestovat prostě)
-	
+## Co dál:
+- otestovat pořádně pomocí testovací sady, zhodnotit
+	- test.py
+		- load model
+		- iterate through words
+		- get result, I guess...
+- GUI appka?
+	- ezy zadání slova, zobrazení výsledku + interaktivní zobrazení modelu?? (buňky, a písmenka jako v docu)
+- na to GRU by hand se asi vykáknu, max udělám něco basic, jako proof of no working concept...
 
 
