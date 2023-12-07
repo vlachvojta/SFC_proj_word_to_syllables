@@ -35,14 +35,18 @@ def transpose(data: torch.Tensor):
     data = torch.reshape(data, new_shape)
     return data
 
-def save_model(model, hidden_dim, epoch, batch_size, path:str = '.'):
-    model_name = f'torch_gru_{hidden_dim}hid_{batch_size}batch_{epoch}epochs.pt'
+def get_save_path(training_path: str, hidden_dim, epoch, batch_size, n_layers:int = 1,
+                  bidirectional:bool = False, bias: bool = False) -> str:
+    directionality = 'bidirectional' if bidirectional else 'unidirectional'
+    bias = 'yesbias' if bias else 'nobias'
+    model_name = f'torch_gru_{hidden_dim}hid_{n_layers}layers_{directionality}_{bias}_{batch_size}batch_{epoch}epochs'
+    return os.path.join(training_path, model_name)
 
-    if not os.path.isdir(path):
-        os.makedirs(path)
+def save_model(model, path:str = 'output_model'):
+    export_path = path + '.pt'
 
-    torch.save(model.state_dict(), os.path.join(path, model_name))
-    print(f'Model saved to {model_name}')
+    torch.save(model.state_dict(), export_path)
+    print(f'Model saved to:\t {export_path}')
 
 def test_val(model, val_data, device, batch_size, task):
     in_words = []
@@ -64,22 +68,20 @@ def test_val(model, val_data, device, batch_size, task):
 
     return levenstein_loss(out_words, labels_words), in_words, out_words, labels_words
 
-def save_out_and_labels(val_out_words, val_labels_words, hidden_dim, epoch, batch_size, path='models'):
-    if not os.path.isdir(path):
-        os.makedirs(path)
-
-    out_name = f'torch_gru_{hidden_dim}hid_{batch_size}batch_{epoch}epochs_val_out.txt'
-    with open(os.path.join(path, out_name), 'w') as f:
+def save_out_and_labels(val_out_words, val_labels_words, path:str = ''):
+    out_path = path + '_val_out.txt'
+    with open(out_path, 'w') as f:
         f.write(val_out_words)
 
-    labels_name = f'torch_gru_{hidden_dim}hid_{batch_size}batch_{epoch}epochs_val_labels.txt'
-    with open(os.path.join(path, labels_name), 'w') as f:
+    labels_path = path + '_val_labels.txt'
+    with open(labels_path, 'w') as f:
         f.write(val_labels_words)
 
-    print(f'Out and labels saved to {out_name} and {labels_name}')
+    print(f'Val out saved to:\t{out_path}')
+    print(f'Val labels saved to:\t{labels_path}')
 
-def plot_losses(trn_losses, trn_losses_lev, val_losses_lev, hidden_dim, epoch, batch_size,
-                view_step: int, path:str = '.'):
+def plot_losses(trn_losses, trn_losses_lev, val_losses_lev, epoch,
+                view_step: int, path:str = 'output_losses'):
     fig, axs = plt.subplots(1, 3, figsize=(15, 5))
     x_ticks = [epoch - len(trn_losses_lev) + e for e in range(len(trn_losses_lev))]
     axs[0].plot(x_ticks, trn_losses)
@@ -97,10 +99,8 @@ def plot_losses(trn_losses, trn_losses_lev, val_losses_lev, hidden_dim, epoch, b
     axs[2].set_yscale('log')
     plt.tight_layout()
 
-    if not os.path.isdir(path):
-        os.makedirs(path)
-    image_name = f'torch_gru_{hidden_dim}hid_{batch_size}batch_{epoch}epochs_losses.png'
-    fig.savefig(os.path.join(path, image_name))
+    export_path = path + '.png'
+    fig.savefig(export_path)
 
 
 def load_model(model_class, path:str = 'models'):
@@ -108,7 +108,7 @@ def load_model(model_class, path:str = 'models'):
     if not path or not model_name:
         return None, 0
 
-    hidden_dim = 0
+    hidden_dim = 8
     match_obj = re.match(r'\S+_(\d+)hid', model_name)
     if match_obj:
         hidden_dim = int(match_obj.groups(1)[0])
@@ -116,8 +116,17 @@ def load_model(model_class, path:str = 'models'):
     match_obj = re.match(r'\S+_(\d+)epochs', model_name)
     if match_obj:
         epochs = int(match_obj.groups(1)[0])
+    n_layers = 1
+    match_obj = re.match(r'\S+_(\d+)layers', model_name)
+    if match_obj:
+        n_layers = int(match_obj.groups(1)[0])
+    bidirectional = 'bidirectional' in model_name
+    bias = 'yesbias' in model_name
 
-    model = model_class(hidden_dim=hidden_dim)
+    print(f'Loading model from {os.path.join(path, model_name)}')
+    print(f'Hidden dim: {hidden_dim}, epochs: {epochs}, n_layers: {n_layers}, bidirectional: {bidirectional}, bias: {bias}')
+
+    model = model_class(hidden_dim=hidden_dim, n_layers=n_layers, bidirectional=bidirectional, bias=bias)
     model.load_state_dict(torch.load(os.path.join(path, model_name), map_location=torch.device('cpu')))
     model.eval()
 
@@ -151,7 +160,7 @@ def char_classes_to_word(orig: str, classes: list):
 def transcribe_word(model, word:str, task:Task = Task.NORMAL, tuple_out = False):
     # prepare word to input into model
     word_flattened = flatten_words([word])[0]
-    word_tensor = charset.word_to_tensor(word_flattened, task=Task.BINARY_CLASSIFICATION_EMBEDDING)
+    word_tensor = charset.word_to_tensor(word_flattened).to(torch.int)
     # word_tensor = helpers.transpose(word_tensor)
 
     # get output from model

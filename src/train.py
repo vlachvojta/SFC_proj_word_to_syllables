@@ -5,8 +5,6 @@ import os
 import time
 
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 
 import torch
 from torch import nn
@@ -15,23 +13,23 @@ from dataset import Dataset
 import charset
 from charset import Task
 import helpers
-
-
 from net_definitions import *
 
 
-def train(net, train_data: Dataset, val_data: Dataset, task: Task, learn_rate, hidden_dim=8, epochs=5, device='cpu',
-          batch_size=32, save_step=5, view_step=1, training_path:str = None):
-    # Instantiating the models
+def train(net, train_data: Dataset, val_data: Dataset, task: Task,
+          learn_rate, device='cpu', batch_size=32, epochs=5, save_step=5, view_step=1,
+          hidden_dim=8, GRU_layers=1, bidirectional=False, bias=False,
+          training_path:str = 'models'):
     model, epochs_trained = None, 0
-    if training_path and os.path.isdir(training_path):
+    if training_path:
         if not os.path.isdir(training_path):
             os.makedirs(training_path)
-        model, epochs_trained = helpers.load_model(net, training_path)
-        epochs += epochs_trained
+        else:
+            model, epochs_trained = helpers.load_model(net, training_path)
+            epochs += epochs_trained
 
     if not model:
-        model = net(hidden_dim=hidden_dim, device=device, batch_size=batch_size)
+        model = net(hidden_dim=hidden_dim, device=device, batch_size=batch_size, n_layers=GRU_layers, bidirectional=bidirectional, bias=bias)
 
     model.to(device)
     print(f'Using device: {device}')
@@ -53,6 +51,7 @@ def train(net, train_data: Dataset, val_data: Dataset, task: Task, learn_rate, h
     h = None  # model.init_hidden(batch_size).to(device)
 
     for epoch in range(epochs_trained, epochs + 1):
+        export_path = helpers.get_save_path(training_path, hidden_dim, epoch, batch_size, n_layers=GRU_layers, bidirectional=bidirectional, bias=bias)
         epoch_outputs = []
         epoch_labels = []
         start_time = time.time()
@@ -78,7 +77,7 @@ def train(net, train_data: Dataset, val_data: Dataset, task: Task, learn_rate, h
             val_loss_lev, val_in_words, val_out_words, val_labels_words = helpers.test_val(model, val_data, device, batch_size, task=task)
             val_losses_lev.append(val_loss_lev)
 
-            print(f"Epoch {epoch}/{epochs}, trn losses: {trn_losses[-1]:.3f}, {trn_losses_lev[-1]:.2f} %, val losses: {val_losses_lev[-1]:.2f} %")
+            print(f"Epoch {epoch}/{epochs}, trn losses: {trn_losses[-1]:.5f}, {trn_losses_lev[-1]:.5f} %, val losses: {val_losses_lev[-1]:.3f} %")
             print(f"Average epoch time in this view_step: {np.mean(epoch_times[-view_step:]):.2f} seconds")
             print('Example:')
             print(f'\tin:  {val_in_words[:100]}')
@@ -87,9 +86,9 @@ def train(net, train_data: Dataset, val_data: Dataset, task: Task, learn_rate, h
             print('')
 
         if epoch % save_step == 0:
-            helpers.plot_losses(trn_losses, trn_losses_lev, val_losses_lev, hidden_dim, epoch, batch_size, view_step=view_step, path=training_path)
-            helpers.save_model(model, hidden_dim, epoch, batch_size, path=training_path)
-            helpers.save_out_and_labels(val_out_words, val_labels_words, hidden_dim, epoch, batch_size, path=training_path)
+            helpers.plot_losses(trn_losses, trn_losses_lev, val_losses_lev, epoch, view_step=view_step, path=export_path)
+            helpers.save_model(model, path=export_path)
+            helpers.save_out_and_labels(val_out_words, val_labels_words, path=export_path)
         current_time = time.time()
         print(f'epoch time: {current_time-start_time:.2f} seconds')
         epoch_times.append(current_time-start_time)
@@ -100,6 +99,7 @@ def train(net, train_data: Dataset, val_data: Dataset, task: Task, learn_rate, h
 
 
 def main():
+    # TODO move main up
     set_size = 'set_30000_8000'
     trn_file = os.path.join("dataset", "ssc_29-06-16", set_size, "trn.txt")
     val_file = os.path.join("dataset", "ssc_29-06-16", set_size, "val.txt")
@@ -110,9 +110,10 @@ def main():
     print(f'Loaded {len(trn_dataset)} training and {len(val_dataset)} validation samples.')
 
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
-    _ = train(GRUNetBinaryEmbeding, trn_dataset, val_dataset, task, learn_rate=0.0001, hidden_dim=256, device=device,
-              batch_size=250, epochs=2_000, save_step=50, view_step=10,
-              training_path='models/020_gru_binary_emb_256h_29000data_dropout_slower')
+    _ = train(GRUNetBinaryEmbeding, trn_dataset, val_dataset, task, 
+              learn_rate=0.0001, device=device, batch_size=250, epochs=1_000, save_step=50, view_step=10,
+              hidden_dim=256, GRU_layers=2, bidirectional=True, bias=True,
+              training_path='models/022_gru_binary_emb_256h_29000data_dropout_slower_bigger')
 
 
 if __name__ == '__main__':

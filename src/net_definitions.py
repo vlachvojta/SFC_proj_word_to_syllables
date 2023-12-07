@@ -63,7 +63,7 @@ class GRUNetBinary(nn.Module):
 
 
 class GRUNetBinaryEmbeding(nn.Module):
-    def __init__(self, input_dim=1, hidden_dim=256, output_dim=1, n_layers=1, device='cpu', batch_size=32):
+    def __init__(self, input_dim=1, hidden_dim=256, output_dim=1, n_layers=1, device='cpu', batch_size=32, bidirectional=False, bias=False):
         super(GRUNetBinaryEmbeding, self).__init__()
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
@@ -71,10 +71,10 @@ class GRUNetBinaryEmbeding(nn.Module):
         self.batch_size = batch_size
 
         self.embed = nn.Embedding(40, hidden_dim)  # 40 is the number of characters in the vocabulary
-        self.gru = nn.GRU(hidden_dim, hidden_dim, n_layers, batch_first=True, bias=False)
+        self.gru = nn.GRU(hidden_dim, hidden_dim, n_layers, batch_first=True, bias=bias, bidirectional=bidirectional)
         self.drop = nn.Dropout(0.2)
         self.relu2 = nn.ReLU()
-        self.decoder = nn.Linear(hidden_dim, output_dim)
+        self.decoder = nn.Linear(hidden_dim * (2 if bidirectional else 1), output_dim)
         self.sigm = nn.Sigmoid()
 
     def forward(self, x, h=None):
@@ -92,6 +92,7 @@ class GRUNetBinaryEmbeding(nn.Module):
         activated = self.sigm(out)
         if debug: print(f'activated ({activated.shape}): {activated}')
         return activated, h
+
 
 class GRUNetEncDec(nn.Module):
     def __init__(self, input_dim=1, hidden_dim=8, output_dim=1, n_layers=1, device='cpu', batch_size=32):
