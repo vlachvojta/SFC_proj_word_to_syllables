@@ -1,3 +1,5 @@
+import re
+
 from charset import Charset, TaskBinaryClassification
 import helpers
 from net_definitions import *
@@ -22,13 +24,11 @@ def main():
 
     while True:
         word = input('Enter a word (q to exit): ')
-        if not word:
-            continue
-        if word == 'q':
-            break
+        if not word: continue
+        if word == 'q': break
 
         out = helpers.transcribe_word(model, word, Charset(TaskBinaryClassification()))
-        print(out)
+        if out: print(out)
 
 if __name__ == '__main__':
     main()
