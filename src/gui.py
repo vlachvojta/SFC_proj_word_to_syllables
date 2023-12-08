@@ -65,7 +65,7 @@ class FrameComplexGru(tk.Frame):
 
     def btn_transcribe_on_click(self):
         word = self.entry.get()
-        self.entry.delete(0, tk.END)
+        # self.entry.delete(0, tk.END)
 
         if word:
             print(word)

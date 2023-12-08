@@ -1,3 +1,5 @@
 levenshtein
 pyphen
 torch
+matplotlib
+numpy
