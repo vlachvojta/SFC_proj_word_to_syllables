@@ -1,48 +1,105 @@
 import tkinter as tk
 from tkinter import ttk
-
-
-def on_click(entry):
-    word = entry.get()
-    entry.delete(0, tk.END)
-    print(word)
+from PIL import Image, ImageTk
 
 
 def main():
-    root = tk.Tk()
-
-    root.title("Hyphenation program")
-    width, height = 800, 600
-    w, h = root.winfo_screenwidth(), root.winfo_screenheight()
-    root.geometry(f"{w}x{h}+0+0")
-    # root.geometry(f"{width}x{height}")
-    # root.geometry("widthxheight")
-    # root.attributes('-fullscreen',True)
-
-    notebook = ttk.Notebook(root)
-    notebook.pack()
-
-    frame_gru_complex = tk.Frame(notebook, width=w, height=h, bg='cyan')
-    frame_gru_simple = tk.Frame(notebook, width=w, height=h, bg='white')
-
-    frame_gru_complex.pack(fill='both')# , expand=1)
-    frame_gru_simple.pack(fill='both')#, expand=1)
-
-    notebook.add(frame_gru_complex, text='GRU Complex')
-    notebook.add(frame_gru_simple, text='GRU Simple')
+    App()
 
 
-    label = tk.Label(frame_gru_complex, text="PyTorch GRU", font=("Times New Roman", 24))
-    label.pack(padx=20, pady=20)
+class App(tk.Tk):
+    def __init__(self):
+        super().__init__()
 
-    entry = tk.Entry(frame_gru_complex, font=("Times New Roman", 16))
-    entry.pack(padx=20, pady=20)
+        self.title("Hyphenation program")
+        w, h = self.winfo_screenwidth(), self.winfo_screenheight()
+        self.geometry(f"{w}x{h}+0+0")
+        self.config(bg="lightgrey")
+        self.notebook = Notebook(self)
 
-    button = tk.Button(frame_gru_complex, text="Transcribe", font=("Times New Roman", 16), command=lambda: on_click(entry))
-    button.pack(padx=20, pady=20)
+        self.frame_gru_complex = FrameComplexGru(self.notebook, width=w, height=h, bg='cyan')
+        self.frame_gru_simple = FrameSimpleGru(self.notebook, width=w, height=h, bg='white')
+        self.frame_refference = FrameRefference(self.notebook, width=w, height=h, bg='darkgrey')
+
+        self.frame_gru_complex.pack(fill='both')
+        self.frame_gru_simple.pack(fill='both')
+        self.frame_refference.pack(fill='both')
+
+        self.notebook.add(self.frame_gru_complex, text='Complex GRU')
+        self.notebook.add(self.frame_gru_simple, text='Simple GRU')
+        self.notebook.add(self.frame_refference, text='Refference')
+        
+        self.mainloop()
 
 
-    root.mainloop()
+class Notebook(ttk.Notebook):
+    def __init__(self, master): # , width, height, bg):
+        super().__init__(master)
+        self.pack(fill='both')
+
+
+class FrameComplexGru(tk.Frame):
+    def __init__(self, master, width, height, bg):
+        super().__init__(master, width=width, height=height, bg=bg)
+        # super().__init__(master)
+        self.pack(fill='both')
+
+        label = tk.Label(self, text="PyTorch GRU", font=("Times New Roman", 24))
+        # label.grid(column=1, row=1, columnspan=4, padx=20, pady=20)
+        label.pack(padx=20, pady=20)
+
+        self.entry = tk.Entry(self, font=("Times New Roman", 16))
+        self.entry.pack(padx=20, pady=20)
+        # self.entry.bind('<Return>', self.btn_transcribe_on_click)
+
+        button = tk.Button(self, text="Transcribe", font=("Times New Roman", 16),
+                           command=self.btn_transcribe_on_click)
+        button.pack(padx=20, pady=20)
+
+        # img_path = 'docs/gru_diagram_adresa.png'
+        # image = Image.open(img_path)
+        # photo = ImageTk.PhotoImage(image)
+
+        # label = tk.Label(self, image = photo)
+        # label.image = photo
+        # label.grid(row=1)
+
+    def btn_transcribe_on_click(self):
+        word = self.entry.get()
+        self.entry.delete(0, tk.END)
+
+        if word:
+            print(word)
+
+
+class FrameSimpleGru(tk.Frame):
+    def __init__(self, master, width, height, bg):
+        super().__init__(master, width=width, height=height, bg=bg)
+        self.pack(fill='both')
+
+        label = tk.Label(self, text="Simple PyTorch GRU", font=("Times New Roman", 24))
+        label.pack(padx=20, pady=20)
+
+        self.entry = tk.Entry(self, font=("Times New Roman", 16))
+        self.entry.pack(padx=20, pady=20)
+        # self.entry.bind('<Return>', self.btn_transcribe_on_click)
+
+        button = tk.Button(self, text="Transcribe", font=("Times New Roman", 16),
+                           command=self.btn_transcribe_on_click)
+        button.pack(padx=20, pady=20)
+
+    def btn_transcribe_on_click(self):
+        word = self.entry.get()
+        self.entry.delete(0, tk.END)
+
+        if word:
+            print(word)
+
+
+class FrameRefference(tk.Frame):
+    def __init__(self, master, width, height, bg):
+        super().__init__(master, width=width, height=height, bg=bg)
+
 
 if __name__ == '__main__':
     main()
