@@ -42,27 +42,26 @@ class FrameComplexGru(tk.Frame):
     def __init__(self, master, width, height, bg):
         super().__init__(master, width=width, height=height, bg=bg)
         # super().__init__(master)
-        self.pack(fill='both')
+        # self.pack(fill='both')
 
         label = tk.Label(self, text="PyTorch GRU", font=("Times New Roman", 24))
-        # label.grid(column=1, row=1, columnspan=4, padx=20, pady=20)
-        label.pack(padx=20, pady=20)
+        label.grid(column=1, row=1, columnspan=4, padx=20, pady=20, sticky='n')
 
         self.entry = tk.Entry(self, font=("Times New Roman", 16))
-        self.entry.pack(padx=20, pady=20)
+        self.entry.grid(column=1, row=2, padx=20, pady=20, sticky='en')
         # self.entry.bind('<Return>', self.btn_transcribe_on_click)
 
         button = tk.Button(self, text="Transcribe", font=("Times New Roman", 16),
                            command=self.btn_transcribe_on_click)
-        button.pack(padx=20, pady=20)
+        button.grid(column=2, row=2, padx=20, pady=20, sticky='wn')
 
-        # img_path = 'docs/gru_diagram_adresa.png'
-        # image = Image.open(img_path)
-        # photo = ImageTk.PhotoImage(image)
+        img_path = 'docs/gru_diagram_adresa.png'
+        image = Image.open(img_path)
+        photo = ImageTk.PhotoImage(image)
 
-        # label = tk.Label(self, image = photo)
-        # label.image = photo
-        # label.grid(row=1)
+        label = tk.Label(self, image = photo)
+        label.image = photo
+        label.grid(row=2, column=3, columnspan=2, rowspan=2, padx=20, pady=20, sticky='ne')
 
     def btn_transcribe_on_click(self):
         word = self.entry.get()
