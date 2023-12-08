@@ -6,8 +6,7 @@ import matplotlib.pyplot as plt
 import torch
 import Levenshtein as lev
 
-import charset
-from charset import Task
+from charset import Charset
 
 ERROR_LEV_LOSS = 4242.42
 
@@ -22,19 +21,6 @@ def levenstein_loss(out, label):
     return 100.0 * lev.distance(out, label) / len(label)
 
 
-def transpose(data: torch.Tensor):
-    """Transpose last dimension of a tensor to the correct shape."""
-    if not data.shape[-1] == 1:
-        # Transpose: Add a dimension to the end of the tensor
-        new_shape = [dim for dim in data.shape] + [1]
-        data = torch.reshape(data, new_shape)
-        return data
-
-    # De-transpose: Remove the last dimension of the tensor
-    new_shape = [dim for dim in data.shape[:-1]]
-    data = torch.reshape(data, new_shape)
-    return data
-
 def get_save_path(training_path: str, hidden_dim, epoch, batch_size, n_layers:int = 1,
                   bidirectional:bool = False, bias: bool = False) -> str:
     directionality = 'bidirectional' if bidirectional else 'unidirectional'
@@ -44,29 +30,8 @@ def get_save_path(training_path: str, hidden_dim, epoch, batch_size, n_layers:in
 
 def save_model(model, path:str = 'output_model'):
     export_path = path + '.pt'
-
     torch.save(model.state_dict(), export_path)
-    print(f'Model saved to:\t {export_path}')
-
-def test_val(model, val_data, device, batch_size, task):
-    in_words = []
-    out_words = []
-    labels_words = []
-
-    for i, (x, labels) in enumerate(val_data.batch_iterator(batch_size), start=1):
-        out, _ = model(x.to(device))
-        inputs = [charset.tensor_to_word(i, task=task) for i in x]
-        outputs = [charset.tensor_to_word(o, task=task) for o in out]
-        labels = [charset.tensor_to_word(l, task=task) for l in labels]
-        in_words += inputs
-        out_words += outputs
-        labels_words += labels
-
-    in_words = ','.join(in_words)
-    out_words = ','.join(out_words)
-    labels_words = ','.join(labels_words)
-
-    return levenstein_loss(out_words, labels_words), in_words, out_words, labels_words
+    print(f'Model saved to:\t\t{export_path}')
 
 def save_out_and_labels(val_out_words, val_labels_words, path:str = ''):
     out_path = path + '_val_out.txt'
@@ -144,34 +109,19 @@ def find_last_model(path:str = 'models') -> (str, str):
         return os.path.dirname(path), os.path.basename(path)
     return None, None
 
-def char_classes_to_word(orig: str, classes: list):
-    """Converts a list of character classes to a word."""
-    word = ''
-    for i, c in enumerate(classes):
-        if c == '0':
-            word += orig[i]
-        elif c == '1':
-            word += orig[i]
-            word += '-'
-        else:
-            raise ValueError(f'Unknown character class: {c}')
-    return word
-
-def transcribe_word(model, word:str, task:Task = Task.NORMAL, tuple_out = False):
+def transcribe_word(model, word:str, charset:Charset, device='cpu'):
     # prepare word to input into model
     word_flattened = flatten_words([word])[0]
-    word_tensor = charset.word_to_tensor(word_flattened).to(torch.int)
-    # word_tensor = helpers.transpose(word_tensor)
+    word_tensor = charset.word_to_input_tensor(word_flattened).to(device)
 
     # get output from model
     with torch.no_grad():
         out, _ = model(word_tensor)
-    char_classes = charset.tensor_to_word(out, task=Task.BINARY_CLASSIFICATION_EMBEDDING)
+    
+    out_word = charset.tensor_to_word(out, orig_word=word_flattened)
 
-    if tuple_out:
-        return char_classes_to_word(word, char_classes), char_classes
-
-    return char_classes_to_word(word, char_classes)
+    # char_classes = charset.tensor_to_word(out)
+    return out_word  # char_classes_to_word(word, char_classes)
 
 def flatten_words(words):
     original_flat = []
