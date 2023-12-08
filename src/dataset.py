@@ -2,20 +2,18 @@
 import os
 import re
 
-import torch
-
-import charset
-from charset import Task
+from charset import Charset, TaskBinaryClassification
 import helpers
 
 
 class Dataset:
     """Load dataset from file and provide interface for training and evaluating."""
-    def __init__(self, path, rnn_shift:int = 0, padding:int = 0, task:Task = Task.NORMAL):
+    def __init__(self, path, charset:Charset, rnn_shift:int = 0, padding:int = 0):
         self.path = path
         self.rnn_shift = rnn_shift  # shift for RNN input and target
         self.padding = padding  # padding for RNN input and target
-        self.task = task
+        self.charset = charset
+        self.task = charset.task
 
         # read lines of file
         with open(path, 'r', encoding='utf-8') as f:
@@ -43,10 +41,9 @@ class Dataset:
     def __getitem__(self, index):
         return self.inputs[index], self.targets[index], self.original[index]
 
-    def get_item(self, index):
-        x = helpers.transpose(charset.word_to_tensor(self.inputs[index], padding=self.padding))
-        target = charset.word_to_tensor(self.targets[index], padding=self.padding, rnn_shift=self.rnn_shift)
-
+    def get_item_tensors(self, index):
+        x = self.charset.word_to_input_tensor(self.inputs[index])
+        target = self.charset.word_to_label_tensor(self.targets[index])
         return x, target
 
     def batch_iterator(self, batch_size):
@@ -61,23 +58,18 @@ class Dataset:
             end = batch_size * (i + 1)
             max_len = max([len(word) for word in self.inputs[start:end]])
 
-            if self.task == Task.BINARY_CLASSIFICATION_EMBEDDING:
-                inputs = torch.zeros(batch_size, max_len, dtype=torch.int)
-            else:
-                inputs = torch.zeros(batch_size, max_len, 1, dtype=torch.float)
-            targets = torch.zeros(batch_size, max_len, 1, dtype=torch.float)
+            inputs = self.charset.init_input_tensor(batch_size, max_len)
+            targets = self.charset.init_label_tensor(batch_size, max_len)
 
             for j in range(batch_size):
-                if self.task == Task.BINARY_CLASSIFICATION_EMBEDDING:
-                    inputs[j] = charset.word_to_tensor(self.inputs[start + j], padding=max_len)
-                else:
-                    inputs[j] = helpers.transpose(charset.word_to_tensor(self.inputs[start + j], padding=max_len))
-                targets[j] = helpers.transpose(charset.word_to_tensor(self.targets[start + j], padding=max_len, task=self.task))
+                inputs[j] = self.charset.word_to_input_tensor(self.inputs[start + j], padding=max_len)
+                targets[j] = self.charset.word_to_label_tensor(self.targets[start + j], padding=max_len)
+
             yield inputs, targets
 
 
 def test():
-    dataset = Dataset(os.path.join('dataset', 'ssc_29-06-16', 'set_1000_250', 'val.txt'))
+    dataset = Dataset(os.path.join('dataset', 'ssc_29-06-16', 'set_1000_250', 'val.txt'), Charset(TaskBinaryClassification))
     print(len(dataset))
     for i in range(10):
         print(dataset[i])
