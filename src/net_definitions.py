@@ -3,7 +3,7 @@ from torch import nn
 
 
 class GRUNet(nn.Module):
-    def __init__(self, input_dim=1, hidden_dim=8, output_dim=1, n_layers=1, device='cpu', batch_size=32):
+    def __init__(self, input_dim=1, hidden_dim=8, output_dim=1, n_layers=1, device='cpu', batch_size=32, bidirectional=False, bias=False):
         super(GRUNet, self).__init__()
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
@@ -62,7 +62,7 @@ class GRUNetBinaryEmbeding(nn.Module):
 
 
 class GRUNetEncDec(nn.Module):
-    def __init__(self, input_dim=1, hidden_dim=8, output_dim=1, n_layers=1, device='cpu', batch_size=32):
+    def __init__(self, input_dim=1, hidden_dim=8, output_dim=1, n_layers=1, device='cpu', batch_size=32, bidirectional=False, bias=False):
         super(GRUNetEncDec, self).__init__()
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
