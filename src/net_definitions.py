@@ -15,14 +15,9 @@ class GRUNet(nn.Module):
         self.fc = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x, h=None):
-        # print(f'FORWARD! x({x.shape})') #: {x}')
         out, h = self.gru(x, h)
-        # print(f'out({out.shape})')#: {out}')
-        # print(f'h({h.shape})')#: {h}')
         activated = self.relu(out)
-        # print(f'activated({activated.shape})')#: {activated}')
         out = self.fc(activated)
-        # print(f'fc(relu(out)) ({out.shape})')#: {out}')
         return out, h
 
     def init_hidden(self, batch_size:int=None):

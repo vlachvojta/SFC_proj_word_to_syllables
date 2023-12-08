@@ -94,8 +94,6 @@ class Charset:
         tensor = torch.round(tensor).type(torch.int)  # round to num representing char or binary class
         out_word = []
 
-        # print(f'self.task.tensor_to_word_type: {self.task.tensor_to_word_type}')
-
         if self.task.tensor_to_word_type == tensor_to_word_type.dictionary:
             for letter_class in tensor:
                 try:
@@ -105,10 +103,8 @@ class Charset:
                 else:
                     out_word.append(output_char)
         elif self.task.tensor_to_word_type == tensor_to_word_type.binary:
-            # print(f'tensor ({tensor.shape}): {tensor}')
             if not orig_word or len(orig_word) != tensor.shape[0]:
                 out_word = ''.join([str(c) for c in tensor.tolist()])
-                # print(f'DEB: out_word: {out_word}')
             else:
                 out_word = ''.join(Charset.char_classes_to_word(orig_word, tensor.tolist()))
         else:

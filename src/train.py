@@ -15,6 +15,25 @@ import helpers
 from net_definitions import *
 
 
+def main():
+    # TODO move main to the top
+    set_size = 'set_30000_8000'
+    charset = Charset(TaskBinaryClassification)
+
+    trn_file = os.path.join("dataset", "ssc_29-06-16", set_size, "trn.txt")
+    val_file = os.path.join("dataset", "ssc_29-06-16", set_size, "val.txt")
+
+    trn_dataset = Dataset(trn_file, charset=charset)
+    val_dataset = Dataset(val_file, charset=charset)
+    print(f'Loaded {len(trn_dataset)} training and {len(val_dataset)} validation samples.')
+
+    device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
+    train(GRUNetBinaryEmbeding, trn_dataset, val_dataset, charset=charset,
+          learn_rate=0.0001, device=device, batch_size=250, epochs=1_000, save_step=50, view_step=10,
+          hidden_dim=256, GRU_layers=2, bidirectional=True, bias=True,
+          training_path='models/042_gru_binary_emb_256h_29000data_dropout_slower_bigger_TEST')
+
+
 def train(net, train_data: Dataset, val_data: Dataset, charset: Charset,
           learn_rate, device='cpu', batch_size=32, epochs=5, save_step=5, view_step=1,
           hidden_dim=8, GRU_layers=1, bidirectional=False, bias=False,
@@ -116,25 +135,6 @@ def test_val(model, val_data, device, batch_size, charset:Charset):
     labels_words = ','.join(labels_words)
 
     return helpers.levenstein_loss(out_words, labels_words), in_words, out_words, labels_words
-
-
-def main():
-    # TODO move main to the top
-    set_size = 'set_30000_8000'
-    charset = Charset(TaskBinaryClassification)
-
-    trn_file = os.path.join("dataset", "ssc_29-06-16", set_size, "trn.txt")
-    val_file = os.path.join("dataset", "ssc_29-06-16", set_size, "val.txt")
-
-    trn_dataset = Dataset(trn_file, charset=charset)
-    val_dataset = Dataset(val_file, charset=charset)
-    print(f'Loaded {len(trn_dataset)} training and {len(val_dataset)} validation samples.')
-
-    device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
-    train(GRUNetBinaryEmbeding, trn_dataset, val_dataset, charset=charset,
-          learn_rate=0.0001, device=device, batch_size=250, epochs=1_000, save_step=50, view_step=10,
-          hidden_dim=256, GRU_layers=2, bidirectional=True, bias=True,
-          training_path='models/042_gru_binary_emb_256h_29000data_dropout_slower_bigger_TEST')
 
 
 if __name__ == '__main__':

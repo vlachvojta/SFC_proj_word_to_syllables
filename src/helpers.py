@@ -117,11 +117,8 @@ def transcribe_word(model, word:str, charset:Charset, device='cpu'):
     # get output from model
     with torch.no_grad():
         out, _ = model(word_tensor)
-    
-    out_word = charset.tensor_to_word(out, orig_word=word_flattened)
 
-    # char_classes = charset.tensor_to_word(out)
-    return out_word  # char_classes_to_word(word, char_classes)
+    return charset.tensor_to_word(out, orig_word=word_flattened)
 
 def flatten_words(words):
     original_flat = []
