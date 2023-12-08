@@ -96,3 +96,4 @@ sentencepiece -> tokenizace
 - na to GRU by hand se asi vykáknu, max udělám něco basic, jako proof of no working concept...
 
 
+GUI inspired by: [YT Atlas tkinter tutorial](https://github.com/clear-code-projects/tkinter-complete/blob/main/2%20layout/2_9_classes.py)
