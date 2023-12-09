@@ -97,11 +97,12 @@ class Charset:
         if self.task.tensor_to_word_type == tensor_to_word_type.dictionary:
             for letter_class in tensor:
                 try:
-                    output_char = self.charset_dictionary_reversed[letter_class]
+                    output_char = self.charset_dictionary_reversed[letter_class.item()]
                 except KeyError:
                     out_word += self.unknown_char
                 else:
                     out_word.append(output_char)
+            out_word = ''.join(out_word)
         elif self.task.tensor_to_word_type == tensor_to_word_type.binary:
             if not orig_word or len(orig_word) != tensor.shape[0]:
                 out_word = ''.join([str(c) for c in tensor.tolist()])

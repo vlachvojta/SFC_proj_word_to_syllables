@@ -110,7 +110,6 @@ def find_last_model(path:str = 'models') -> (str, str):
     return None, None
 
 def transcribe_word(model, word:str, charset:Charset, device='cpu'):
-    # prepare word to input into model
     word_flattened = flatten_words([word])[0]
     word_tensor = charset.word_to_input_tensor(word_flattened).to(device)
 
@@ -118,9 +117,21 @@ def transcribe_word(model, word:str, charset:Charset, device='cpu'):
         return ''
 
     with torch.no_grad():
-        out, _ = model(word_tensor)
+        out_tensor, _ = model(word_tensor)
 
-    return charset.tensor_to_word(out, orig_word=word_flattened)
+    out_word = charset.tensor_to_word(out_tensor, orig_word=word)
+    out_word = replace_end_of_syllable_tag(out_word, orig_word=word, charset=charset)
+    return out_word
+
+def replace_end_of_syllable_tag(in_word, orig_word, charset:Charset):
+    out_word = ''
+    for i, ch in enumerate(in_word):
+        if ch == charset.end_of_syllable_char:
+            out_word += orig_word[i]
+            out_word += '-'
+        else:
+            out_word += ch
+    return out_word
 
 def flatten_words(words):
     original_flat = []
