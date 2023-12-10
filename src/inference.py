@@ -48,11 +48,11 @@ def main():
 
         gru_old, gru_new, baseline  = inference_engine.transcribe_word(word)
         if gru_old:
-            print(f'old GRU:  {gru_old}')
+            print(f'GRU regrese:   {gru_old}')
         if gru_new:
-            print(f'new GRU:  {gru_new}')
+            print(f'GRU bin class: {gru_new}')
         if baseline:
-            print(f'baseline: {baseline}')
+            print(f'baseline:      {baseline}')
 
 if __name__ == '__main__':
     main()
