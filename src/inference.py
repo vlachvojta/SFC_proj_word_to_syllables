@@ -7,8 +7,8 @@ from net_definitions import *
 
 
 class InferenceEngine:
-    def __init__(self, gru_old_path: str = 'models/009_torch_gru_8hid_250batch',
-                 gru_complex_path: str = 'models/025_gru_binary_emb_256h_29000data_dropout_slower_both'):
+    def __init__(self, gru_old_path: str = 'models/torch_gru_8hid_250batch_21000epochs.pt',
+                 gru_complex_path: str = 'models/torch_gru_256hid_2layers_bidirectional_yesbias_250batch_800epochs.pt'):
         self.gru_old_model = self.load_model(GRUNet, gru_old_path)
         self.gru_complex_model = self.load_model(GRUNetBinaryEmbeding, gru_complex_path)
         self.baseline = pyphen.Pyphen(lang='cs_CZ')
