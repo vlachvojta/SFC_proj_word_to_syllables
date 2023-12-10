@@ -1,4 +1,3 @@
-import torch
 from torch import nn
 
 
@@ -40,22 +39,15 @@ class GRUNetBinaryEmbeding(nn.Module):
         self.embed = nn.Embedding(input_dim, hidden_dim)  # 40 is the number of characters in the vocabulary
         self.gru = nn.GRU(hidden_dim, hidden_dim, n_layers, batch_first=True, bias=bias, bidirectional=bidirectional)
         self.drop = nn.Dropout(0.2)
-        self.relu2 = nn.ReLU()
+        self.relu = nn.ReLU()
         self.decoder = nn.Linear(hidden_dim * (2 if bidirectional else 1), output_dim)
         self.sigm = nn.Sigmoid()
 
     def forward(self, x, h=None):
-        debug = False
-        if debug: print('FORWARD!')
-        if debug: print(f'x: ({x.shape}, {x.dtype})')
         emb = self.embed(x)
-        if debug: print(f'emb({emb.shape}, {emb.dtype})')
         out, h = self.gru(emb, h)
         dropped = self.drop(out)
-        if debug: print(f'dropped ({dropped.shape}, {dropped.dtype})')
-        activated = self.relu2(dropped)
-        if debug: print(f'activated ({activated.shape}, {activated.dtype})')
+        activated = self.relu(dropped)
         out = self.decoder(activated)
-        activated = self.sigm(out)
-        if debug: print(f'activated ({activated.shape}, {activated.dtype})')
-        return activated, h
+        bin_class = self.sigm(out)
+        return bin_class, h
