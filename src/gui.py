@@ -2,90 +2,66 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 
+from inference import InferenceEngine
+
 
 def main():
-    App()
+    App(InferenceEngine())
 
 
 class App(tk.Tk):
-    def __init__(self):
+    def __init__(self, inference_engine: InferenceEngine):
         super().__init__()
+        self.inference_engine = inference_engine
 
         self.title("Hyphenation program")
-        w, h = self.winfo_screenwidth(), self.winfo_screenheight()
-        self.geometry(f"{w}x{h}+0+0")
+        screenwidth, screenheight = self.winfo_screenwidth(), self.winfo_screenheight()
+        self.geometry(f"{screenwidth}x{screenheight}+0+0")
         self.config(bg="lightgrey")
-        self.notebook = Notebook(self)
-
-        self.frame_gru_complex = FrameComplexGru(self.notebook, width=w, height=h, bg='cyan')
-        self.frame_gru_simple = FrameSimpleGru(self.notebook, width=w, height=h, bg='white')
-        self.frame_refference = FrameRefference(self.notebook, width=w, height=h, bg='darkgrey')
-
-        self.frame_gru_complex.pack(fill='both')
-        self.frame_gru_simple.pack(fill='both')
-        self.frame_refference.pack(fill='both')
-
-        self.notebook.add(self.frame_gru_complex, text='Complex GRU')
-        self.notebook.add(self.frame_gru_simple, text='Simple GRU')
-        self.notebook.add(self.frame_refference, text='Refference')
         
-        self.mainloop()
-
-
-class Notebook(ttk.Notebook):
-    def __init__(self, master): # , width, height, bg):
-        super().__init__(master)
-        self.pack(fill='both')
-
-
-class FrameComplexGru(tk.Frame):
-    def __init__(self, master, width, height, bg):
-        super().__init__(master, width=width, height=height, bg=bg)
-        # super().__init__(master)
-        # self.pack(fill='both')
-
-        label = tk.Label(self, text="PyTorch GRU", font=("Times New Roman", 24))
-        label.grid(column=1, row=1, columnspan=4, padx=20, pady=20, sticky='n')
 
         self.entry = tk.Entry(self, font=("Times New Roman", 16))
-        self.entry.grid(column=1, row=2, padx=20, pady=20, sticky='en')
+        self.entry.grid(column=3, row=2, padx=20, pady=20, sticky='en')
         # self.entry.bind('<Return>', self.btn_transcribe_on_click)
 
         button = tk.Button(self, text="Transcribe", font=("Times New Roman", 16),
                            command=self.btn_transcribe_on_click)
-        button.grid(column=2, row=2, padx=20, pady=20, sticky='wn')
+        button.grid(column=4, row=2, padx=20, pady=20, sticky='wn')
+
+        label = tk.Label(self, text="Old GRU", font=("Times New Roman", 16))
+        label.grid(column=1, row=4, columnspan=2, rowspan=1, padx=20, pady=20, sticky='n')
+
+        label = tk.Label(self, text="New GRU", font=("Times New Roman", 16))
+        label.grid(column=3, row=4, columnspan=2, rowspan=1, padx=20, pady=20, sticky='n')
+
+        label = tk.Label(self, text="Baseline", font=("Times New Roman", 16))
+        label.grid(column=5, row=4, columnspan=1, rowspan=1, padx=20, pady=20, sticky='n')
+
+        self.entry_old_gru = tk.Entry(self, font=("Times New Roman", 16))
+        # self.entry_old_gru.config(state="disabled")
+        self.entry_old_gru.grid(column=1, row=5, columnspan=2, rowspan=1, padx=20, pady=20, sticky='n')
+
+        self.entry_new_gru = tk.Entry(self, font=("Times New Roman", 16))
+        # self.entry_new_gru.config(state="disabled")
+        self.entry_new_gru.grid(column=3, row=5, columnspan=2, rowspan=1, padx=20, pady=20, sticky='n')
+
+        self.entry_baseline = tk.Entry(self, font=("Times New Roman", 16))
+        # self.entry_baseline.config(state="disabled")
+        self.entry_baseline.grid(column=5, row=5, columnspan=1, rowspan=1, padx=20, pady=20, sticky='n')
 
         img_path = 'docs/gru_diagram_adresa.png'
         image = Image.open(img_path)
-        photo = ImageTk.PhotoImage(image)
+        photo = ImageTk.PhotoImage(self.resize_img(image, w=screenwidth // 3))
 
         label = tk.Label(self, image = photo)
         label.image = photo
-        label.grid(row=2, column=3, columnspan=2, rowspan=2, padx=20, pady=20, sticky='ne')
+        label.grid(column=1, row=6, columnspan=2, rowspan=2, padx=20, pady=20, sticky='n')
 
-    def btn_transcribe_on_click(self):
-        word = self.entry.get()
-        # self.entry.delete(0, tk.END)
+        label = tk.Label(self, image = photo)
+        label.image = photo
+        label.grid(column=3, row=6, columnspan=2, rowspan=2, padx=20, pady=20, sticky='n')
 
-        if word:
-            print(word)
-
-
-class FrameSimpleGru(tk.Frame):
-    def __init__(self, master, width, height, bg):
-        super().__init__(master, width=width, height=height, bg=bg)
-        self.pack(fill='both')
-
-        label = tk.Label(self, text="Simple PyTorch GRU", font=("Times New Roman", 24))
-        label.pack(padx=20, pady=20)
-
-        self.entry = tk.Entry(self, font=("Times New Roman", 16))
-        self.entry.pack(padx=20, pady=20)
-        # self.entry.bind('<Return>', self.btn_transcribe_on_click)
-
-        button = tk.Button(self, text="Transcribe", font=("Times New Roman", 16),
-                           command=self.btn_transcribe_on_click)
-        button.pack(padx=20, pady=20)
+        self.mainloop()
 
     def btn_transcribe_on_click(self):
         word = self.entry.get()
@@ -94,10 +70,30 @@ class FrameSimpleGru(tk.Frame):
         if word:
             print(word)
 
-
-class FrameRefference(tk.Frame):
-    def __init__(self, master, width, height, bg):
-        super().__init__(master, width=width, height=height, bg=bg)
+        gru_old, gru_new, baseline = self.inference_engine(word)
+        if gru_old:
+            print(f'old GRU:     {gru_old}')
+            self.entry_old_gru.delete(0, tk.END)
+            self.entry_old_gru.insert(0, gru_old)
+        if gru_new:
+            print(f'new GRU: {gru_new}')
+            self.entry_new_gru.delete(0, tk.END)
+            self.entry_new_gru.insert(0, gru_new)
+        if baseline:
+            print(f'baseline:    {baseline}')
+            self.entry_baseline.delete(0, tk.END)
+            self.entry_baseline.insert(0, baseline)
+    
+    def resize_img(self, image, w=None, h=None):
+        if not w and not h:
+            return image
+        
+        if not w:
+            w = int(image.width * h / image.height)
+        if not h:
+            h = int(image.height * w / image.width)
+        
+        return image.resize((w, h))
 
 
 if __name__ == '__main__':
