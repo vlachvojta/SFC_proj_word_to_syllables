@@ -86,14 +86,10 @@ sentencepiece -> tokenizace
 
 
 ## Co dál:
-- otestovat pořádně pomocí testovací sady, zhodnotit
-	- test.py
-		- load model
-		- iterate through words
-		- get result, I guess...
-- GUI appka?
-	- ezy zadání slova, zobrazení výsledku + interaktivní zobrazení modelu?? (buňky, a písmenka jako v docu)
-- na to GRU by hand se asi vykáknu, max udělám něco basic, jako proof of no working concept...
+- GUI appka
+  - Jenom dodělat ezy obrázky s 'počítač', ale jinak nic
+- docu:
+  - už jen dodělat OBĚ GRU grafy BEZ 2LAYER A BIDIRECT, jenom prostě, aby tam byl embedding, fc a sigmoida.
 
 
 GUI inspired by: [YT Atlas tkinter tutorial](https://github.com/clear-code-projects/tkinter-complete/blob/main/2%20layout/2_9_classes.py)
