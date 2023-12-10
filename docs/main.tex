@@ -34,7 +34,7 @@
 \section{Úvod}
 \textbf{Tato dokumentace byla vytvořena v rámci pozdního odevzdání s laskavým dovolením doc. Janouška, kterému tímto děkuji.}
 
-V tomto projektu jsem se rozhodl demonostrovat činnost GRU sítě pomocí jazykové úlohy. Konkrétně rozdělení slov na slabiky. Vytvořil jsem si vlastní dataset a využil jsem implementaci GRU vrstev v  knihovně PyTorch, pro trénování jsou využil osobní notebook bez GPU a experimentoval jsem i s Google Colab s GPU runtime. Pro tuto úlohu již existují řešení, které jsem použil jako referenční baseline a nakonec se mi podařilo baseline pouze přiblížit, ale nepřekonal jsem ji.
+V tomto projektu jsem se rozhodl demonostrovat činnost GRU sítě pomocí jazykové úlohy. Konkrétně rozdělení slov na slabiky. Vytvořil jsem si vlastní dataset a využil jsem implementaci GRU vrstev v  knihovně PyTorch. Pro tuto úlohu již existují řešení, které jsem použil jako referenční baseline a nakonec se mi podařilo baseline pouze přiblížit, ale nepřekonal jsem ji.
 
 \section{Popis úlohy}
 
@@ -48,8 +48,19 @@ Z těchto sloupců jsem jednoduchým algoritmem získal přepis na slabiky. Prog
 
 \section{Formulování úlohy modelu}
 
+V rámci projektu jsem experimentoval se dvěma způsoby. První způsob je regresního typu a využívá Mean-Square Error jako chybovou funkci. Druhý způsob (vytvořen v rámci pozdního odevzdání) funguje na principu binární klasifikace a Cross-entropy loss jako chybové funkce.
+Oba přístupy zpracovávají vstupní slovo jako posloupnost písmen a liší se ve formulaci ground-truths. Délka vstupu a výstupu je vždy stejná a oba modely nahradí poslední písmeno slabiky příslušnou třídou. Doplnění oddělovače do výsledného slova (např. \texttt{-}) zajistí jednoduchý algoritmus. Tento způsob jsem zvolil proto, aby se nezpožďovaly výstupní písmena od těch vstupních. 
 
-Pro vytvoření samotných vstupů sítě a ground-truths jsem zvolil postup, kde síť detekuje konec slabiky a poslední písmeno dané slabiky nahradí příslušným tokenem (\texttt{@}). Doplnění oddělovače do výsledného slova (např. \texttt{-}) zajistí jednoduchý algoritmus. Tento způsob jsem zvolil proto, aby se nezpožďovaly výstupní písmena od těch vstupních. Tímto způsobem se síť může učit závislost pouze na několika málo posledních znacích. V opačném případě by zde vznikala závislost na znacích s větším rozestupem, což teoreticky zesložiťuje úlohu. Výsledkem tohoto zpracování byly sloupce \texttt{Vstup při trénování} a \texttt{Ground truth}, viz tabulka \ref{table:dataset}
+\subsection{Regresní přístup}
+
+Ground-truths u tohoto přístupu tvoří přímo písmena (jejich index v abecedě), ke kterému by se měl model postupně blížit. Token pro konec slabiky je zde speciální znak (\texttt{@}). 
+Příklad tohoto zpracování je v sloupci \texttt{Ground truth multi}, viz Tabulka \ref{table:dataset}
+
+\subsection{Binární klasifikace}
+
+Ground-truth zde tvoří pouze třídy 2 třídy, kde 1 znamená poslední písmeno slabiky, 0 znamená opak.
+Příklad tohoto zpracování je v sloupci \texttt{Ground truth bin}, viz Tabulka \ref{table:dataset}
+
 
 \begin{table}[]
 \centering
@@ -60,12 +71,12 @@ Pro vytvoření samotných vstupů sítě a ground-truths jsem zvolil postup, kd
 adresa                     & adresa                       & a.dre.sa                   \\ \hline
 antimilitaristický         & antimilitariStiTSkí          & an.ti.mi.li.ta.riS.tiTS.kí \\ \hline
 antikvariát                & antikvarijáT                 & an.ti.kva.ri.jáT           \\ \hline
-popřípadě                  & popřípaďe                    & po.pří.pa.ďe               \\ \hline
+popřípadě                  & popřípadě                    & po.pří.pa.ďe               \\ \hline
 \textbf{Přepis na slabiky} & \textbf{Ground truth bin}    & \textbf{Ground truth multi}      \\ \hline
-a-dre-sa                   & adresa                       & @dr@sa                     \\ \hline
-an-ti-mi-li-ta-ris-tic-ký  & antimilitaristicky           & a@t@m@l@t@ri@ti@ky         \\ \hline
-an-ti-kva-ri-át            & antikvariat                  & a@t@kv@r@@t                \\ \hline
-po-pří-pa-dě               & popripade                    & p@pr@p@de                  \\ \hline
+a-dre-sa                   & 100100                       & @dr@sa                     \\ \hline
+an-ti-mi-li-ta-ris-tic-ký  & 010101010100100100           & a@t@m@l@t@ri@ti@ky         \\ \hline
+an-ti-kva-ri-át            & 01010010110                  & a@t@kv@r@@t                \\ \hline
+po-pří-pa-dě               & 010010100                    & p@pr@p@de                  \\ \hline
 \end{tabular}
 \label{table:dataset}
 \end{table}
