@@ -12,7 +12,8 @@ docu:
 afterdocu:
 	rm -f main.aux
 	rm -f main.out
-	mv main.pdf docs/dokumentace.pdf
+	rm -f main.log
+	mv main.pdf dokumentace.pdf
 
 
 clean:
