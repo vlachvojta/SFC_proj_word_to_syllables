@@ -1,5 +1,4 @@
 import tkinter as tk
-from tkinter import ttk
 from PIL import Image, ImageTk
 
 from inference import InferenceEngine
@@ -18,7 +17,6 @@ class App(tk.Tk):
         screenwidth, screenheight = self.winfo_screenwidth(), self.winfo_screenheight()
         self.geometry(f"{screenwidth}x{screenheight}+0+0")
         self.config(bg="lightgrey")
-        
 
         self.entry = tk.Entry(self, font=("Times New Roman", 16))
         self.entry.grid(column=3, row=2, padx=20, pady=20, sticky='en')
@@ -28,10 +26,10 @@ class App(tk.Tk):
                            command=self.btn_transcribe_on_click)
         button.grid(column=4, row=2, padx=20, pady=20, sticky='wn')
 
-        label = tk.Label(self, text="Old GRU", font=("Times New Roman", 16))
+        label = tk.Label(self, text="GRU regresní přístup", font=("Times New Roman", 16))
         label.grid(column=1, row=4, columnspan=2, rowspan=1, padx=20, pady=20, sticky='n')
 
-        label = tk.Label(self, text="New GRU", font=("Times New Roman", 16))
+        label = tk.Label(self, text="GRU binární klasifikace", font=("Times New Roman", 16))
         label.grid(column=3, row=4, columnspan=2, rowspan=1, padx=20, pady=20, sticky='n')
 
         label = tk.Label(self, text="Baseline", font=("Times New Roman", 16))
@@ -49,13 +47,17 @@ class App(tk.Tk):
         # self.entry_baseline.config(state="disabled")
         self.entry_baseline.grid(column=5, row=5, columnspan=1, rowspan=1, padx=20, pady=20, sticky='n')
 
-        img_path = 'docs/gru_diagram_adresa.png'
+        img_path = 'docs/gru_old_ahoj.png'
         image = Image.open(img_path)
         photo = ImageTk.PhotoImage(self.resize_img(image, w=screenwidth // 3))
 
         label = tk.Label(self, image = photo)
         label.image = photo
         label.grid(column=1, row=6, columnspan=2, rowspan=2, padx=20, pady=20, sticky='n')
+
+        img_path = 'docs/gru_new_ahoj.png'
+        image = Image.open(img_path)
+        photo = ImageTk.PhotoImage(self.resize_img(image, w=screenwidth // 3))
 
         label = tk.Label(self, image = photo)
         label.image = photo
@@ -72,15 +74,15 @@ class App(tk.Tk):
 
         gru_old, gru_new, baseline = self.inference_engine(word)
         if gru_old:
-            print(f'old GRU:     {gru_old}')
+            print(f'GRU regrese:   {gru_old}')
             self.entry_old_gru.delete(0, tk.END)
             self.entry_old_gru.insert(0, gru_old)
         if gru_new:
-            print(f'new GRU: {gru_new}')
+            print(f'GRU bin class: {gru_new}')
             self.entry_new_gru.delete(0, tk.END)
             self.entry_new_gru.insert(0, gru_new)
         if baseline:
-            print(f'baseline:    {baseline}')
+            print(f'baseline:      {baseline}')
             self.entry_baseline.delete(0, tk.END)
             self.entry_baseline.insert(0, baseline)
     
