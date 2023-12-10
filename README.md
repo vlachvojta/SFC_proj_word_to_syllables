@@ -90,6 +90,6 @@ sentencepiece -> tokenizace
   - Jenom dodělat ezy obrázky s 'počítač', ale jinak nic
 - docu:
   - už jen dodělat OBĚ GRU grafy BEZ 2LAYER A BIDIRECT, jenom prostě, aby tam byl embedding, fc a sigmoida.
-
+- make GitHub public a hodit odkaz do docu I guess...
 
 GUI inspired by: [YT Atlas tkinter tutorial](https://github.com/clear-code-projects/tkinter-complete/blob/main/2%20layout/2_9_classes.py)
