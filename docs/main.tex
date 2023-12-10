@@ -1,4 +1,4 @@
-main.tex\documentclass[a4paper]{article}
+\documentclass[a4paper]{article}
 \usepackage[a4paper, margin=1.5in]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage{graphicx} % Required for inserting images
@@ -32,11 +32,13 @@ main.tex\documentclass[a4paper]{article}
 \maketitle
 
 \section{Úvod}
-V tomto projektu jsem se rozhodl demonostrovat činnost GRU sítě pomocí jazykové úlohy. A to rozdělování slov na slabiky, vytvořil jsem si vlastní dataset a využil jsem implementaci GRU v  knihovně PyTorch, pro trénování jsou využil domácí počítač bez GPU a částečně Google Colab s GPU runtime.
+\textbf{Tato dokumentace byla vytvořena v rámci pozdního odevzdání s laskavým dovolením doc. Janouška, kterému tímto děkuji.}
+
+V tomto projektu jsem se rozhodl demonostrovat činnost GRU sítě pomocí jazykové úlohy. Konkrétně rozdělení slov na slabiky. Vytvořil jsem si vlastní dataset a využil jsem implementaci GRU vrstev v  knihovně PyTorch, pro trénování jsou využil osobní notebook bez GPU a experimentoval jsem i s Google Colab s GPU runtime. Pro tuto úlohu již existují řešení, které jsem použil jako referenční baseline a nakonec se mi podařilo baseline pouze přiblížit, ale nepřekonal jsem ji.
 
 \section{Popis úlohy}
 
-Pro tento projekt jsem si zvolil úlohu rozdělení slova na slabiky. Omezil jsem se pouze na české slova, kde mohu aspoň trochu posoudit správnost intuitivně. Přesněji se tedy jedná o problém, kde na vstupu je české slovo a na výstupu by mělo být slovo rozdělené na slabíky. Nenalezl jsem mnoho literatury, která by se tímto problémem zabývala, předpokládám, že je to úloha moc jednoduchá na to, aby se na tom dal zveřejňovat seriózní článek. Výjimku tvoří např. Hyphenation using Deep Neural Network\footnote{\href{https://negedng.github.io/files/2018-Hyphenation.pdf}{Gergely et al. Hyphenation using Deep Neural Network}}.
+Pro tento projekt jsem si zvolil úlohu rozdělení slova na slabiky. Omezil jsem se pouze na česká slova, kde mohu posoudit správnost intuitivně. Přesněji se tedy jedná o problém, kde na vstupu je české slovo a na výstupu by mělo být slovo rozdělené na slabiky. Nenalezl jsem mnoho literatury, která by se tímto problémem zabývala, předpokládám, že je to úloha moc jednoduchá na to, aby se na tom dal zveřejňovat seriózní článek. Výjimku tvoří např. Hyphenation using Deep Neural Network\footnote{\href{https://negedng.github.io/files/2018-Hyphenation.pdf}{Gergely et al. Hyphenation using Deep Neural Network}}.
 
 \subsection{Získání datasetu}
 
@@ -44,7 +46,10 @@ Pro výrobu datasetu jsem využil fonetický korpus Češtiny\footnote{\href{htt
 
 Z těchto sloupců jsem jednoduchým algoritmem získal přepis na slabiky. Program procházel sloupce \texttt{Původní slovo} a \texttt{Fonetické slabiky} současně, nahrazoval fonetické výrazy původními písmeny a zanechal u nich informaci o slabikách. Více viz Python Notebook \texttt{python-scripts/Dataset\_creating.ipynb}.
 
-Pro vytvoření samotných vstupů sítě a ground-truths jsem zvolil postup, kde síť detekuje konec slabiky a poslední písmeno nahradí příslušným tokenem (\texttt{@}). Doplnění oddělovače do výsledného slova (např. \texttt{-}) zajistí jednoduchý algoritmus. Tento způsob jsem zvolil proto, aby se nezpožďovaly výstupní písmena od těch vstupních. Tímto způsobem se síť může učit závislost pouze na několika málo posledních znacích. V opačném případě by zde vznikala závislost na znacích s větším rozestupem, což teoreticky zesložiťuje úlohu. Výsledkem tohoto zpracování byly sloupce \texttt{Vstup při trénování} a \texttt{Ground truth}, viz tabulka \ref{table:dataset}
+\section{Formulování úlohy modelu}
+
+
+Pro vytvoření samotných vstupů sítě a ground-truths jsem zvolil postup, kde síť detekuje konec slabiky a poslední písmeno dané slabiky nahradí příslušným tokenem (\texttt{@}). Doplnění oddělovače do výsledného slova (např. \texttt{-}) zajistí jednoduchý algoritmus. Tento způsob jsem zvolil proto, aby se nezpožďovaly výstupní písmena od těch vstupních. Tímto způsobem se síť může učit závislost pouze na několika málo posledních znacích. V opačném případě by zde vznikala závislost na znacích s větším rozestupem, což teoreticky zesložiťuje úlohu. Výsledkem tohoto zpracování byly sloupce \texttt{Vstup při trénování} a \texttt{Ground truth}, viz tabulka \ref{table:dataset}
 
 \begin{table}[]
 \centering
@@ -56,7 +61,7 @@ adresa                     & adresa                       & a.dre.sa            
 antimilitaristický         & antimilitariStiTSkí          & an.ti.mi.li.ta.riS.tiTS.kí \\ \hline
 antikvariát                & antikvarijáT                 & an.ti.kva.ri.jáT           \\ \hline
 popřípadě                  & popřípaďe                    & po.pří.pa.ďe               \\ \hline
-\textbf{Přepis na slabiky} & \textbf{Vstup při trénování} & \textbf{Ground truth}      \\ \hline
+\textbf{Přepis na slabiky} & \textbf{Ground truth bin}    & \textbf{Ground truth multi}      \\ \hline
 a-dre-sa                   & adresa                       & @dr@sa                     \\ \hline
 an-ti-mi-li-ta-ris-tic-ký  & antimilitaristicky           & a@t@m@l@t@ri@ti@ky         \\ \hline
 an-ti-kva-ri-át            & antikvariat                  & a@t@kv@r@@t                \\ \hline
