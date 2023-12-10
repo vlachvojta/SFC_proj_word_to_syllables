@@ -8,9 +8,9 @@ from net_definitions import *
 
 class InferenceEngine:
     def __init__(self, gru_old_path: str = 'models/torch_gru_8hid_250batch_21000epochs.pt',
-                 gru_complex_path: str = 'models/torch_gru_256hid_2layers_bidirectional_yesbias_250batch_800epochs.pt'):
+                 gru_new_path: str = 'models/torch_gru_256hid_2layers_bidirectional_yesbias_250batch_800epochs.pt'):
         self.gru_old_model = self.load_model(GRUNet, gru_old_path)
-        self.gru_complex_model = self.load_model(GRUNetBinaryEmbeding, gru_complex_path)
+        self.gru_new_model = self.load_model(GRUNetBinaryEmbeding, gru_new_path)
         self.baseline = pyphen.Pyphen(lang='cs_CZ')
 
     def load_model(self, cls, path):
@@ -30,9 +30,9 @@ class InferenceEngine:
 
     def transcribe_word(self, word) -> (str, str, str):
         gru_old = helpers.transcribe_word(self.gru_old_model, word, Charset(TaskNormal))
-        gru_complex = helpers.transcribe_word(self.gru_complex_model, word, Charset(TaskBinaryClassification()))
+        gru_new = helpers.transcribe_word(self.gru_new_model, word, Charset(TaskBinaryClassification()))
         baseline = self.baseline.inserted(word)
-        return gru_old, gru_complex, baseline
+        return gru_old, gru_new, baseline
 
 
 def main():
@@ -46,13 +46,13 @@ def main():
         if not word or len(word) < 2:
             continue
 
-        gru_old, gru_complex, baseline  = inference_engine.transcribe_word(word)
+        gru_old, gru_new, baseline  = inference_engine.transcribe_word(word)
         if gru_old:
-            print(f'old GRU:     {gru_old}')
-        if gru_complex:
-            print(f'complex GRU: {gru_complex}')
+            print(f'old GRU:  {gru_old}')
+        if gru_new:
+            print(f'new GRU:  {gru_new}')
         if baseline:
-            print(f'baseline:    {baseline}')
+            print(f'baseline: {baseline}')
 
 if __name__ == '__main__':
     main()

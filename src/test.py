@@ -1,47 +1,74 @@
-import os
-import re
-
-import torch
-
-from dataset import Dataset
-import charset
-from charset import Task
+from inference import InferenceEngine
 import helpers
-from net_definitions import *
+
+
+def main():
+    debug = False
+    engine = InferenceEngine()
+
+    # Load test dataset and prepare inputs and targets
+    inputs, targets = prepare_test_set('dataset/long_words_test.txt')
+    if debug:
+        print(f'Loaded {len(inputs)} words for testing.')
+        print(f'First 10 words: {inputs[:10]}')
+        print()
+        print(f'Loaded {len(targets)} targets for testing.')
+        print(f'First 10 targets: {targets[:10]}')
+        print()
+
+    gru_old_outs = []
+    gru_new_outs = []
+    baseline_outs = []
+    target_outs = []
+
+    for input_word, target in zip(inputs, targets):
+        gru_old, gru_new, baseline = engine(input_word)
+        if not gru_old or not gru_new or not baseline:
+            continue
+
+        gru_old_outs.append(gru_old)
+        gru_new_outs.append(gru_new)
+        baseline_outs.append(baseline)
+        target_outs.append(target)
+
+        if debug:
+            if not gru_new == target:
+                print(f'Target:   {target}')
+                print(f'GRU new:  {gru_new}')
+            if not baseline == target:
+                print(f'Target:   {target}')
+                print(f'Baseline: {baseline}')
+            print()
+
+
+    min_len = min(len(gru_old_outs), len(gru_new_outs), len(baseline_outs), len(target_outs))
+    gru_old_outs = gru_old_outs[:min_len]
+    gru_new_outs = gru_new_outs[:min_len]
+    baseline_outs = baseline_outs[:min_len]
+    targets = target_outs[:min_len]
+
+    gru_old_lev = helpers.levenstein_loss(gru_old_outs, targets)
+    gru_new_lev = helpers.levenstein_loss(gru_new_outs, targets)
+    baseline_lev = helpers.levenstein_loss(baseline_outs, targets)
+
+    print(f'GRU old Levenshtein loss:  {gru_old_lev:.2f} %')
+    print(f'GRU new Levenshtein loss:  {gru_new_lev:.2f} %')
+    print(f'Baseline Levenshtein loss: {baseline_lev:.2f} %')
+
+
+def prepare_test_set(path) -> (list, list):
+    """Prepare test set for inference engine."""
+    targets = read_lines(path)
+    inputs = [word.replace('-', '') for word in targets]
+    return inputs, targets
 
 
 def read_lines(path):
     with open(path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
-    lines = [line.strip('\r\n').replace('-', '') for line in lines]
+    lines = [line.strip('\r\n') for line in lines]
     return lines
 
-
-def main():
-    model, _ = helpers.load_model(GRUNetBinaryEmbeding, 
-        'models/019_gru_binary_emb_256h_29000data_dropout/torch_gru_256hid_250batch_500epochs.pt')
-    model.eval()
-    print('Model loaded.')
-    print(model)
-    print()
-
-    words = read_lines('dataset/ssc_29-06-16/ssc_29-06-16_proccessed_shuffled.txt')
-    print(f'loaded {len(words)} words such as: {words[:10]}')
-
-    for i, word in enumerate(words[:10]):
-        # word += '______'
-        out, classes = helpers.transcribe_word(model, word + '______', tuple_out=True)
-
-        if out != word:
-            print(f'{word} -> \t{out}')
-        
-        if i % 1000 == 0:
-            print('.', end='', flush=True)
-
-    # for word in words:
-    #     out = helpers.transcribe_word(model, word)
-    #     print(f'{word} -> \t{out}')
-    print()
 
 if __name__ == '__main__':
     main()

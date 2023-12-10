@@ -110,7 +110,8 @@ def find_last_model(path:str = 'models') -> (str, str):
     return None, None
 
 def transcribe_word(model, word:str, charset:Charset, device='cpu'):
-    word_flattened = flatten_words([word])[0]
+    word_lower = word.lower()
+    word_flattened = flatten_words([word_lower])[0]
     word_tensor = charset.word_to_input_tensor(word_flattened).to(device)
 
     if word_tensor.shape[0] == 0:
